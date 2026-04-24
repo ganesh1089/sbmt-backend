@@ -36,10 +36,10 @@ app.use(cors({
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
+      callback(null, true);
     } else {
       console.log("❌ CORS blocked:", origin);
-      return callback(null, false);
+      callback(null, false);
     }
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -47,8 +47,8 @@ app.use(cors({
   credentials: true
 }));
 
-// 🔥 FIXED preflight (IMPORTANT CHANGE)
-app.options(/.*/, cors());
+// 🔥 SAFE preflight (NO CRASH)
+app.options("/*", cors());
 
 // ================= STATIC FILES =================
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
