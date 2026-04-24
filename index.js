@@ -27,13 +27,16 @@ app.use(express.json());
 app.use(
   cors({
     origin: [
-      "http://127.0.0.1:5500",
-      "http://localhost:5500"
+      "http://localhost:5500",
+      "https://graceful-muffin-061d75.netlify.app"
     ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true
   })
 );
+
+// important preflight support
+app.options("*", cors());
 
 // ================= STATIC FILES =================
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
