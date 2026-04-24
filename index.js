@@ -35,18 +35,23 @@ app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
 
+    const allowedOrigins = [
+      "http://localhost:5500",
+      "http://127.0.0.1:5500",
+      "https://graceful-muffin-061d75.netlify.app",
+      "https://endearing-bonbon-8aa4d3.netlify.app"
+    ];
+
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.log("❌ CORS blocked:", origin);
+      console.log("❌ Blocked:", origin);
       callback(null, false);
     }
   },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
-
 // 🔥 SAFE preflight (NO CRASH)
 app.options("/*", cors());
 
