@@ -6,7 +6,7 @@ import path from "path";
 import cors from "cors";
 import mongoose from "mongoose";
 
-// ================= ROUTES =================
+// ROUTES
 import authRoutes from "./routes/auth.js";
 import protectedRoutes from "./routes/protected.js";
 import teacherRoutes from "./routes/teacherRoutes.js";
@@ -20,45 +20,43 @@ import dashboardRoutes from "./routes/dashboard.js";
 
 const app = express();
 
-// ================= MIDDLEWARE =================
+// MIDDLEWARE
 app.use(express.json());
 
-// 🔥 CORS (production safe)
 app.use(
   cors({
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
   })
 );
 
-// static files
+// STATIC FILES (SAFE FIX)
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-// ================= ROUTES =================
+// ROUTES
 app.use("/api/auth", authRoutes);
 app.use("/api", protectedRoutes);
 app.use("/api/teacher", teacherRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/hod", hodAuthRoutes);
+
+// ⚠️ FIX: separate HOD routes (NO CONFLICT)
+app.use("/api/hod/auth", hodAuthRoutes);
+app.use("/api/hod", hodRoutes);
+
 app.use("/api/students", studentRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/marks", marksRoutes);
-app.use("/api/hod", hodRoutes);
 app.use("/api/download", downloadRoutes);
 
-console.log("✅ All routes loaded");
-
-// ================= TEST ROUTE =================
 app.get("/", (req, res) => {
   res.send("SBMT API Running 🚀");
 });
 
-// ================= DB CONNECT + SERVER START =================
+// DB
 const uri = process.env.MONGO_URI;
 
 if (!uri) {
-  console.error("❌ MONGO_URI missing in .env file");
+  console.error("❌ MONGO_URI missing");
   process.exit(1);
 }
 
@@ -66,19 +64,18 @@ mongoose.set("bufferCommands", false);
 
 const startServer = async () => {
   try {
-    await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000,
-    });
+    await mongoose.connect(uri);
 
-    console.log("🔥 MongoDB Atlas connected");
+    console.log("🔥 MongoDB connected");
 
     const PORT = process.env.PORT || 5000;
 
     app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`🚀 Server running on ${PORT}`);
     });
+
   } catch (err) {
-    console.log("❌ DB connection failed:", err);
+    console.log("❌ DB error:", err);
     process.exit(1);
   }
 };
