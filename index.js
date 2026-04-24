@@ -23,7 +23,7 @@ const app = express();
 // ================= MIDDLEWARE =================
 app.use(express.json());
 
-// 🔥 FIXED CORS (PRODUCTION SAFE)
+// ================= CORS (PRODUCTION SAFE) =================
 const allowedOrigins = [
   "http://localhost:5500",
   "http://127.0.0.1:5500",
@@ -33,13 +33,13 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // allow requests with no origin (mobile apps, postman)
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     } else {
-      return callback(new Error("Not allowed by CORS"));
+      console.log("❌ CORS blocked:", origin);
+      return callback(null, false);
     }
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -47,8 +47,8 @@ app.use(cors({
   credentials: true
 }));
 
-// 🔥 preflight support
-app.options("*", cors());
+// 🔥 FIXED preflight (IMPORTANT CHANGE)
+app.options(/.*/, cors());
 
 // ================= STATIC FILES =================
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
