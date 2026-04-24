@@ -23,10 +23,15 @@ const app = express();
 // ================= MIDDLEWARE =================
 app.use(express.json());
 
+// 🔥 SAFE CORS (FIXED FOR FRONTEND + RENDER)
 app.use(
   cors({
-    origin: "*",
+    origin: [
+      "http://127.0.0.1:5500",
+      "http://localhost:5500"
+    ],
     methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
   })
 );
 
@@ -39,9 +44,9 @@ app.use("/api", protectedRoutes);
 app.use("/api/teacher", teacherRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
-// 🔥 FIXED HOD ROUTES (NO CONFLICT)
-app.use("/api/hod", hodAuthRoutes);   // login route: /api/hod/login
-app.use("/api/hod", hodRoutes);       // other hod routes
+// 🔥 HOD ROUTES (CLEAN & SAFE)
+app.use("/api/hod", hodAuthRoutes);
+app.use("/api/hod", hodRoutes);
 
 app.use("/api/students", studentRoutes);
 app.use("/api/attendance", attendanceRoutes);
