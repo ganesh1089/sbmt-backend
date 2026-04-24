@@ -6,7 +6,7 @@ import path from "path";
 import cors from "cors";
 import mongoose from "mongoose";
 
-// ROUTES
+// ================= ROUTES =================
 import authRoutes from "./routes/auth.js";
 import protectedRoutes from "./routes/protected.js";
 import teacherRoutes from "./routes/teacherRoutes.js";
@@ -20,7 +20,7 @@ import dashboardRoutes from "./routes/dashboard.js";
 
 const app = express();
 
-// MIDDLEWARE
+// ================= MIDDLEWARE =================
 app.use(express.json());
 
 app.use(
@@ -30,29 +30,30 @@ app.use(
   })
 );
 
-// STATIC FILES (SAFE FIX)
+// ================= STATIC FILES =================
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-// ROUTES
+// ================= ROUTES =================
 app.use("/api/auth", authRoutes);
 app.use("/api", protectedRoutes);
 app.use("/api/teacher", teacherRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
-// ⚠️ FIX: separate HOD routes (NO CONFLICT)
-app.use("/api/hod/auth", hodAuthRoutes);
-app.use("/api/hod", hodRoutes);
+// 🔥 FIXED HOD ROUTES (NO CONFLICT)
+app.use("/api/hod", hodAuthRoutes);   // login route: /api/hod/login
+app.use("/api/hod", hodRoutes);       // other hod routes
 
 app.use("/api/students", studentRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/marks", marksRoutes);
 app.use("/api/download", downloadRoutes);
 
+// ================= TEST ROUTE =================
 app.get("/", (req, res) => {
   res.send("SBMT API Running 🚀");
 });
 
-// DB
+// ================= DB =================
 const uri = process.env.MONGO_URI;
 
 if (!uri) {
@@ -62,6 +63,7 @@ if (!uri) {
 
 mongoose.set("bufferCommands", false);
 
+// ================= START SERVER =================
 const startServer = async () => {
   try {
     await mongoose.connect(uri);
