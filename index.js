@@ -23,15 +23,32 @@ const app = express();
 // ================= MIDDLEWARE =================
 app.use(express.json());
 
-// 🔥 SAFE CORS (FIXED FOR FRONTEND + RENDER)
+// 🔥 FIXED CORS (PRODUCTION SAFE)
+const allowedOrigins = [
+  "http://localhost:5500",
+  "http://127.0.0.1:5500",
+  "https://graceful-muffin-061d75.netlify.app",
+  "https://endearing-bonbon-8aa4d3.netlify.app"
+];
+
 app.use(cors({
-  origin: [
-    "http://localhost:5500",
-    "https://graceful-muffin-061d75.netlify.app"
-  ],
+  origin: function (origin, callback) {
+    // allow requests with no origin (mobile apps, postman)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error("Not allowed by CORS"));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
+
+// 🔥 preflight support
+app.options("*", cors());
 
 // ================= STATIC FILES =================
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
@@ -42,7 +59,6 @@ app.use("/api", protectedRoutes);
 app.use("/api/teacher", teacherRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
-// 🔥 HOD ROUTES (CLEAN & SAFE)
 app.use("/api/hod", hodAuthRoutes);
 app.use("/api/hod", hodRoutes);
 
