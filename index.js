@@ -25,12 +25,24 @@ app.use(express.json());
 
 // 🔥 SAFE CORS (FIXED FOR FRONTEND + RENDER)
 app.use(cors({
-  origin: [
-    "http://localhost:5500",
-    "https://graceful-muffin-061d75.netlify.app"
-  ],
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      "http://localhost:5500",
+      "http://127.0.0.1:5500",
+      "https://endearing-bonbon-8aa4d3.netlify.app"
+    ];
+
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log("❌ CORS blocked:", origin);
+      callback(null, false);
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  credentials: true
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 // ================= STATIC FILES =================
