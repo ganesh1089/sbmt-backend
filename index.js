@@ -29,7 +29,7 @@ app.use(cors({
     const allowedOrigins = [
       "http://localhost:5500",
       "http://127.0.0.1:5500",
-      "https://endearing-bonbon-8aa4d3.netlify.app"
+      "https://sbmt.netlify.app"
     ];
 
     if (!origin) return callback(null, true);
