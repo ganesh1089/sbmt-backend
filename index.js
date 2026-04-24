@@ -24,19 +24,14 @@ const app = express();
 app.use(express.json());
 
 // 🔥 SAFE CORS (FIXED FOR FRONTEND + RENDER)
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5500",
-      "https://graceful-muffin-061d75.netlify.app"
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    credentials: true
-  })
-);
-
-// important preflight support
-app.options("*", cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5500",
+    "https://graceful-muffin-061d75.netlify.app"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true
+}));
 
 // ================= STATIC FILES =================
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
