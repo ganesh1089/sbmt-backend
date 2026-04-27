@@ -6,7 +6,7 @@ const authMiddleware = async (req, res, next) => {
     const token = req.headers.authorization?.split(" ")[1];
 
     if (!token) {
-      return res.status(401).json({ message: "No token" });
+      return res.status(401).json({ message: "No token provided" });
     }
 
     const decoded = jwt.verify(token, "secretkey");
@@ -14,18 +14,18 @@ const authMiddleware = async (req, res, next) => {
     const teacher = await Teacher.findById(decoded.teacherId);
 
     if (!teacher) {
-      return res.status(401).json({ message: "Invalid user" });
+      return res.status(401).json({ message: "Invalid teacher" });
     }
 
-    // 🔥 IMPORTANT
+    // 🔥 ALWAYS TRUST DB (NOT TOKEN)
     req.teacher = {
       _id: teacher._id,
       name: teacher.name,
-      role: decoded.role,
-      className: decoded.className
+      role: teacher.role,
+      className: teacher.className
     };
 
-    console.log("AUTH TEACHER 👉", req.teacher);
+    console.log("AUTH OK 👉", req.teacher);
 
     next();
 
