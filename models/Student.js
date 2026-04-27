@@ -37,7 +37,28 @@ const studentSchema = new mongoose.Schema({
     required: true
   },
 
-  // 🔥 LOGIN FIELDS (NEW)
+  // 🔥 NEW FIELDS START
+  address: {
+    type: String,
+    trim: true
+  },
+
+  photo: {
+    type: String // filename store hoga
+  },
+
+  admissionNo: {
+    type: String,
+    unique: true,
+    index: true
+  },
+
+  qrToken: {
+    type: String
+  },
+  // 🔥 NEW FIELDS END
+
+  // 🔐 LOGIN FIELDS
   username: {
     type: String,
     unique: true
@@ -51,11 +72,12 @@ const studentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Teacher"
   }
+
 }, {
   timestamps: true
 });
 
-// 🔥 UNIQUE CLASS + ROLL NO
+// 🔥 UNIQUE CLASS + ROLL NO (as it is)
 studentSchema.index({ className: 1, rollNo: 1 }, { unique: true });
 
 export default mongoose.model("Student", studentSchema);

@@ -6,6 +6,12 @@ import path from "path";
 import cors from "cors";
 import mongoose from "mongoose";
 
+import { fileURLToPath } from "url";
+
+// ================= FIX __dirname =================
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // ================= ROUTES =================
 import authRoutes from "./routes/auth.js";
 import protectedRoutes from "./routes/protected.js";
@@ -17,13 +23,13 @@ import hodAuthRoutes from "./routes/hodAuth.js";
 import hodRoutes from "./routes/hodRoutes.js";
 import downloadRoutes from "./routes/downloadRoutes.js";
 import dashboardRoutes from "./routes/dashboard.js";
-
+import qrRoutes from "./routes/qrRoutes.js";
 const app = express();
 
 // ================= MIDDLEWARE =================
 app.use(express.json());
 
-// 🔥 SAFE CORS (FIXED FOR FRONTEND + RENDER)
+// 🔥 SAFE CORS
 app.use(cors({
   origin: function (origin, callback) {
     const allowedOrigins = [
@@ -46,7 +52,8 @@ app.use(cors({
 }));
 
 // ================= STATIC FILES =================
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+// 🔥 IMPORTANT: uploads folder backend ke andar hona chahiye
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ================= ROUTES =================
 app.use("/api/auth", authRoutes);
@@ -54,7 +61,6 @@ app.use("/api", protectedRoutes);
 app.use("/api/teacher", teacherRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
-// 🔥 HOD ROUTES (CLEAN & SAFE)
 app.use("/api/hod", hodAuthRoutes);
 app.use("/api/hod", hodRoutes);
 
@@ -62,8 +68,8 @@ app.use("/api/students", studentRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/marks", marksRoutes);
 app.use("/api/download", downloadRoutes);
-
-// ================= TEST ROUTE =================
+app.use("/api", qrRoutes);
+// ================= TEST =================
 app.get("/", (req, res) => {
   res.send("SBMT API Running 🚀");
 });
@@ -78,7 +84,7 @@ if (!uri) {
 
 mongoose.set("bufferCommands", false);
 
-// ================= START SERVER =================
+// ================= START =================
 const startServer = async () => {
   try {
     await mongoose.connect(uri);
