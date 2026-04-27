@@ -5,6 +5,7 @@ import express from "express";
 import path from "path";
 import cors from "cors";
 import mongoose from "mongoose";
+import fs from "fs";
 
 import { fileURLToPath } from "url";
 
@@ -24,36 +25,47 @@ import hodRoutes from "./routes/hodRoutes.js";
 import downloadRoutes from "./routes/downloadRoutes.js";
 import dashboardRoutes from "./routes/dashboard.js";
 import qrRoutes from "./routes/qrRoutes.js";
+
 const app = express();
 
-// ================= MIDDLEWARE =================
+// ================= BODY PARSER =================
 app.use(express.json());
 
-// 🔥 SAFE CORS
-app.use(cors({
-  origin: function (origin, callback) {
-    const allowedOrigins = [
-      "http://localhost:5500",
-      "http://127.0.0.1:5500",
-      "https://sbmt.netlify.app"
-    ];
+// ================= CORS =================
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      const allowedOrigins = [
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "https://sbmt.netlify.app"
+      ];
 
-    if (!origin) return callback(null, true);
+      if (!origin) return callback(null, true);
 
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.log("❌ CORS blocked:", origin);
-      callback(null, false);
-    }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.log("❌ CORS blocked:", origin);
+        callback(null, false);
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+  })
+);
 
-// ================= STATIC FILES =================
-// 🔥 IMPORTANT: uploads folder backend ke andar hona chahiye
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// ================= UPLOADS FIX (IMPORTANT) =================
+const uploadPath = path.join(__dirname, "uploads");
+
+// 🔥 auto-create uploads folder (Render safe)
+if (!fs.existsSync(uploadPath)) {
+  fs.mkdirSync(uploadPath);
+  console.log("📁 uploads folder created");
+}
+
+// 🔥 static serve
+app.use("/uploads", express.static(uploadPath));
 
 // ================= ROUTES =================
 app.use("/api/auth", authRoutes);
@@ -69,6 +81,7 @@ app.use("/api/attendance", attendanceRoutes);
 app.use("/api/marks", marksRoutes);
 app.use("/api/download", downloadRoutes);
 app.use("/api", qrRoutes);
+
 // ================= TEST =================
 app.get("/", (req, res) => {
   res.send("SBMT API Running 🚀");
@@ -84,7 +97,7 @@ if (!uri) {
 
 mongoose.set("bufferCommands", false);
 
-// ================= START =================
+// ================= START SERVER =================
 const startServer = async () => {
   try {
     await mongoose.connect(uri);
