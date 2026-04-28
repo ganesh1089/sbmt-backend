@@ -6,30 +6,18 @@ import path from "path";
 import cors from "cors";
 import mongoose from "mongoose";
 import fs from "fs";
-
 import { fileURLToPath } from "url";
+
+// ================= APP =================
+const app = express();
 
 // ================= FIX __dirname =================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ================= ROUTES =================
-import authRoutes from "./routes/auth.js";
-import protectedRoutes from "./routes/protected.js";
-import teacherRoutes from "./routes/teacherRoutes.js";
-import studentRoutes from "./routes/studentRoutes.js";
-import attendanceRoutes from "./routes/attendance.js";
-import marksRoutes from "./routes/marksRoutes.js";
-import hodAuthRoutes from "./routes/hodAuth.js";
-import hodRoutes from "./routes/hodRoutes.js";
-import downloadRoutes from "./routes/downloadRoutes.js";
-import dashboardRoutes from "./routes/dashboard.js";
-import qrRoutes from "./routes/qrRoutes.js";
-
-const app = express();
-
 // ================= BODY PARSER =================
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // 🔥 IMPORTANT for forms/multer
 
 // ================= CORS =================
 app.use(
@@ -55,19 +43,30 @@ app.use(
   })
 );
 
-// ================= UPLOADS FIX (IMPORTANT) =================
+// ================= UPLOADS FIX =================
 const uploadPath = path.join(__dirname, "uploads");
 
-// 🔥 auto-create uploads folder (Render safe)
 if (!fs.existsSync(uploadPath)) {
-  fs.mkdirSync(uploadPath);
+  fs.mkdirSync(uploadPath, { recursive: true });
   console.log("📁 uploads folder created");
 }
 
-// 🔥 static serve
+// 🔥 STATIC FILES (IMPORTANT FIX)
 app.use("/uploads", express.static(uploadPath));
 
 // ================= ROUTES =================
+import authRoutes from "./routes/auth.js";
+import protectedRoutes from "./routes/protected.js";
+import teacherRoutes from "./routes/teacherRoutes.js";
+import studentRoutes from "./routes/studentRoutes.js";
+import attendanceRoutes from "./routes/attendance.js";
+import marksRoutes from "./routes/marksRoutes.js";
+import hodAuthRoutes from "./routes/hodAuth.js";
+import hodRoutes from "./routes/hodRoutes.js";
+import downloadRoutes from "./routes/downloadRoutes.js";
+import dashboardRoutes from "./routes/dashboard.js";
+import qrRoutes from "./routes/qrRoutes.js";
+
 app.use("/api/auth", authRoutes);
 app.use("/api", protectedRoutes);
 app.use("/api/teacher", teacherRoutes);
@@ -101,7 +100,6 @@ mongoose.set("bufferCommands", false);
 const startServer = async () => {
   try {
     await mongoose.connect(uri);
-
     console.log("🔥 MongoDB connected");
 
     const PORT = process.env.PORT || 5000;

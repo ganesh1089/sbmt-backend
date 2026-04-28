@@ -28,26 +28,28 @@ router.post(
         });
       }
 
-      // 🔥 roll number
+      // roll no
       const lastStudent = await Student.findOne({
         className: teacherClass,
       }).sort({ rollNo: -1 });
 
       const rollNo = lastStudent?.rollNo ? lastStudent.rollNo + 1 : 1;
 
-      // 🔥 admission number
+      // admission no
       const year = new Date().getFullYear();
       const count = await Student.countDocuments({ className: teacherClass });
 
-      const admissionNo = `SBMT-0687-${year}-${String(count + 1).padStart(3, "0")}`;
+      const admissionNo = `SBMT-0687-${year}-${String(count + 1).padStart(
+        3,
+        "0"
+      )}`;
 
-      // 🔥 QR token
-      const qrToken = Math.random().toString(36).substring(2, 10);
+      // QR token (IMPORTANT: unique safe)
+      const qrToken = Math.random().toString(36).substring(2, 12);
 
-      // 🔥 photo
+      // photo
       const photo = req.file ? req.file.filename : "";
 
-      // 🔐 login credentials
       const username = mobile;
 
       const capName =
@@ -86,7 +88,7 @@ router.post(
       console.error("ADD STUDENT ERROR:", err);
       return res.status(500).json({ msg: "Server error" });
     }
-  },
+  }
 );
 
 /* ================= GET STUDENTS ================= */
@@ -111,8 +113,8 @@ router.get("/", authMiddleware, async (req, res) => {
         rollNo: s.rollNo,
         admissionNo: s.admissionNo,
         photo: s.photo,
-        qrToken: s.qrToken, // 🔥 IMPORTANT FOR ID CARD
-      })),
+        qrToken: s.qrToken,
+      }))
     );
   } catch (err) {
     console.error("GET STUDENTS ERROR:", err);
@@ -120,7 +122,7 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 });
 
-/* ================= STUDENT LOGIN ================= */
+/* ================= LOGIN ================= */
 router.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -135,13 +137,12 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid password" });
     }
 
-    // 🔥 alphabetical SR NO
     const students = await Student.find({ className: student.className }).sort({
       name: 1,
     });
 
     const index = students.findIndex(
-      (s) => String(s._id) === String(student._id),
+      (s) => String(s._id) === String(student._id)
     );
 
     return res.json({
@@ -161,6 +162,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
+/* ================= GET BY ID ================= */
 router.get("/:id", authMiddleware, async (req, res) => {
   try {
     const student = await Student.findById(req.params.id);
@@ -170,10 +172,10 @@ router.get("/:id", authMiddleware, async (req, res) => {
     }
 
     res.json(student);
-
   } catch (err) {
     console.log(err);
     res.status(500).json({ msg: "Server error" });
   }
 });
+
 export default router;
