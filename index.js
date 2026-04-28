@@ -22,13 +22,14 @@ app.use(express.urlencoded({ extended: true })); // 🔥 IMPORTANT for forms/mul
 // ================= CORS =================
 app.use(
   cors({
-    origin: function (origin, callback) {
+    origin: (origin, callback) => {
       const allowedOrigins = [
         "http://localhost:5500",
         "http://127.0.0.1:5500",
-        "https://sbmt.netlify.app"
+        "https://sbmt-frontend.vercel.app"
       ];
 
+      // allow server-to-server / postman requests
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
