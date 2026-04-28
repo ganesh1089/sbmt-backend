@@ -6,12 +6,12 @@ import Marks from "../models/Marks.js";
 const router = express.Router();
 
 // ================= QR STUDENT DATA =================
-router.get("/student/qr/:token", async (req, res) => {
+router.get("/student/:id", async (req, res) => {
   try {
-    const { token } = req.params;
+    const { id } = req.params;
 
-    // 🔍 student find
-    const student = await Student.findOne({ qrToken: token });
+    // 🔍 student find (by ID NOT token)
+    const student = await Student.findById(id);
 
     if (!student) {
       return res.status(404).json({ message: "Student not found" });
@@ -35,7 +35,7 @@ router.get("/student/qr/:token", async (req, res) => {
     // 📊 marks
     const marks = await Marks.find({ studentId: student._id });
 
-    // 📆 monthly attendance (simple calc)
+    // 📆 monthly attendance
     const allAttendance = await Attendance.find();
 
     let total = 0;
@@ -55,6 +55,7 @@ router.get("/student/qr/:token", async (req, res) => {
 
     // ✅ final response
     res.json({
+      _id: student._id,
       name: student.name,
       className: student.className,
       photo: student.photo,
