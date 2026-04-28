@@ -5,22 +5,23 @@ import Marks from "../models/Marks.js";
 
 const router = express.Router();
 
-// ================= QR STUDENT DATA =================
+// ================= STUDENT REPORT BY ID =================
 router.get("/student/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    // 🔍 student find (by ID NOT token)
+    if (!id || id === "null") {
+      return res.status(400).json({ message: "Invalid student id" });
+    }
+
     const student = await Student.findById(id);
 
     if (!student) {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    // 📅 today date
     const today = new Date().toISOString().split("T")[0];
 
-    // 📅 attendance today
     const attendanceDoc = await Attendance.findOne({ date: today });
 
     let todayStatus = "N/A";
@@ -32,10 +33,8 @@ router.get("/student/:id", async (req, res) => {
       todayStatus = record?.status || "N/A";
     }
 
-    // 📊 marks
     const marks = await Marks.find({ studentId: student._id });
 
-    // 📆 monthly attendance
     const allAttendance = await Attendance.find();
 
     let total = 0;
@@ -53,11 +52,12 @@ router.get("/student/:id", async (req, res) => {
 
     const percentage = total ? Math.round((present / total) * 100) : 0;
 
-    // ✅ final response
-    res.json({
+    return res.json({
       _id: student._id,
       name: student.name,
+      fatherName: student.fatherName,
       className: student.className,
+      mobile: student.mobile,
       photo: student.photo,
       admissionNo: student.admissionNo,
       todayAttendance: todayStatus,
