@@ -80,7 +80,7 @@ app.use("/api/students", studentRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/marks", marksRoutes);
 app.use("/api/download", downloadRoutes);
-app.use("/api", qrRoutes);
+app.use("/api/qr", qrRoutes);
 
 // ================= TEST =================
 app.get("/", (req, res) => {
