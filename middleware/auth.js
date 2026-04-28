@@ -25,7 +25,7 @@ const authMiddleware = async (req, res, next) => {
     }
 
     // ================= FIND TEACHER =================
-    const teacher = await Teacher.findById(decoded.teacherId).select("-password");
+    const teacher = await Teacher.findById(decoded.teacherId);
 
     if (!teacher) {
       return res.status(401).json({
@@ -33,20 +33,24 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // ================= ATTACH USER =================
+    // ================= SAFE ATTACH (IMPORTANT FIX) =================
     req.teacher = {
       _id: teacher._id,
       name: teacher.name || "",
-      role: teacher.role || "teacher", // 🔥 fallback fix (role undefined issue solved)
+      role: teacher.role || "teacher",
       className: teacher.className || "",
     };
 
+    // 🔥 extra safety log (temporary debug)
     console.log("AUTH OK 👉", req.teacher);
 
     next();
   } catch (err) {
     console.log("AUTH ERROR:", err.message);
-    return res.status(500).json({ message: "Server auth error" });
+
+    return res.status(500).json({
+      message: "Server auth error",
+    });
   }
 };
 
