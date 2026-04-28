@@ -5,7 +5,7 @@ import upload from "../middleware/upload.js";
 
 const router = express.Router();
 
-/* ================= ADD STUDENT ================= */
+/* ================= ADD STUDENT (FINAL FIX) ================= */
 router.post(
   "/add",
   authMiddleware,
@@ -26,23 +26,22 @@ router.post(
 
       const cleanMobile = String(mobile).trim();
 
-      // ❌ REMOVED MOBILE DUPLICATE CHECK (IMPORTANT CHANGE)
-
-      // 🔥 rollNo safe
+      // roll number
       const lastStudent = await Student.findOne({ className: teacherClass })
         .sort({ rollNo: -1 })
         .lean();
 
       const rollNo = (lastStudent?.rollNo || 0) + 1;
 
+      // admission number
       const year = new Date().getFullYear();
       const count = await Student.countDocuments({ className: teacherClass });
 
       const admissionNo = `SBMT-${year}-${String(count + 1).padStart(3, "0")}`;
 
+      // QR token
       const qrToken =
-        Date.now().toString(36) +
-        Math.random().toString(36).substring(2, 8);
+        Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
 
       const photo = req.file ? req.file.filename : "";
 
@@ -51,6 +50,7 @@ router.post(
 
       const password = `${capName}@${new Date(dob).getFullYear()}`;
 
+      // ✅ NO username field (FIXED)
       const newStudent = await Student.create({
         name,
         fatherName,
@@ -67,25 +67,17 @@ router.post(
         addedBy: req.teacher._id,
       });
 
-      return res.status(201).json({
+      return res.json({
         message: "Student added successfully ✅",
         student: newStudent,
       });
-
     } catch (err) {
       console.error("ADD STUDENT ERROR:", err);
-
-      if (err.code === 11000) {
-        const field = Object.keys(err.keyPattern || {})[0];
-        return res.status(409).json({
-          msg: `${field} already exists ❌`,
-        });
-      }
-
       return res.status(500).json({ msg: "Server error" });
     }
   }
 );
+
 /* ================= GET STUDENTS ================= */
 router.get("/", authMiddleware, async (req, res) => {
   try {
@@ -115,12 +107,13 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 });
 
-/* ================= STUDENT LOGIN ================= */
+/* ================= LOGIN (FIXED) ================= */
 router.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    const student = await Student.findOne({ username });
+    // ✅ username = mobile now
+    const student = await Student.findOne({ mobile: username });
 
     if (!student) {
       return res.status(400).json({ message: "Student not found" });
@@ -155,22 +148,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-/* ================= GET BY ID ================= */
-router.get("/:id", authMiddleware, async (req, res) => {
-  try {
-    const student = await Student.findById(req.params.id);
-
-    if (!student) {
-      return res.status(404).json({ msg: "Student not found" });
-    }
-
-    res.json(student);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ msg: "Server error" });
-  }
-});
-
+/* ================= ID CARD ROUTE (IMPORTANT ORDER FIX) ================= */
 router.get("/id-card/:id", authMiddleware, async (req, res) => {
   try {
     const student = await Student.findById(req.params.id);
@@ -187,12 +165,28 @@ router.get("/id-card/:id", authMiddleware, async (req, res) => {
       rollNo: student.rollNo,
       admissionNo: student.admissionNo,
       photo: student.photo,
-      qrToken: student.qrToken
+      qrToken: student.qrToken,
     });
-
   } catch (err) {
     console.log(err);
     res.status(500).json({ msg: "Server error" });
   }
 });
+
+/* ================= GET BY ID ================= */
+router.get("/:id", authMiddleware, async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+
+    if (!student) {
+      return res.status(404).json({ msg: "Student not found" });
+    }
+
+    res.json(student);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
 export default router;
