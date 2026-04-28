@@ -1,7 +1,11 @@
+import express from "express";
 import Student from "../models/Student.js";
 import Attendance from "../models/Attendance.js";
 import Marks from "../models/Marks.js";
 
+const router = express.Router();
+
+// ================= QR SCAN =================
 router.get("/student/:token", async (req, res) => {
   try {
     const student = await Student.findOne({ qrToken: req.params.token });
@@ -65,3 +69,4 @@ router.get("/student/:token", async (req, res) => {
     res.status(500).json({ message: "Server error ❌" });
   }
 });
+export default router;
