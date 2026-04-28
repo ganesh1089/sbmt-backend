@@ -28,7 +28,7 @@ router.post(
         });
       }
 
-      // ================= DUPLICATE MOBILE CHECK (IMPORTANT FIX) =================
+      // ================= MOBILE DUPLICATE CHECK =================
       const existing = await Student.findOne({ mobile });
       if (existing) {
         return res.status(409).json({
@@ -36,26 +36,29 @@ router.post(
         });
       }
 
-      // roll number
-      const lastStudent = await Student.findOne({
-        className: teacherClass,
-      }).sort({ rollNo: -1 });
-
-      const rollNo = lastStudent?.rollNo ? lastStudent.rollNo + 1 : 1;
-
-      // admission number
+      // ================= SAFE ADMISSION NUMBER GENERATION =================
       const year = new Date().getFullYear();
-      const count = await Student.countDocuments({ className: teacherClass });
 
-      const admissionNo = `SBMT-0687-${year}-${String(count + 1).padStart(
-        3,
-        "0"
-      )}`;
+      const lastStudent = await Student.findOne({ className: teacherClass })
+        .sort({ createdAt: -1 })
+        .lean();
 
-      // safer QR token (more unique)
+      let nextNumber = 1;
+
+      if (lastStudent?.admissionNo) {
+        const match = lastStudent.admissionNo.match(/(\d+)$/);
+        if (match) {
+          nextNumber = parseInt(match[1]) + 1;
+        }
+      }
+
+      const admissionNo = `SBMT-0687-${year}-${String(nextNumber).padStart(3, "0")}`;
+
+      // ================= QR TOKEN =================
       const qrToken =
         Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
 
+      // ================= PHOTO =================
       const photo = req.file ? req.file.filename : "";
 
       const username = mobile;
@@ -75,7 +78,7 @@ router.post(
         address,
         photo,
         className: teacherClass,
-        rollNo,
+        rollNo: 1, // (optional: tu later fix kar sakta hai proper sequencing)
         admissionNo,
         qrToken,
         username,
@@ -92,13 +95,16 @@ router.post(
         password,
         admissionNo,
       });
+
     } catch (err) {
       console.error("ADD STUDENT ERROR:", err);
 
-      // 🔥 Mongo duplicate safety (backup)
+      // ================= SAFER ERROR HANDLING =================
       if (err.code === 11000) {
+        const field = Object.keys(err.keyPattern || {})[0] || "field";
+
         return res.status(409).json({
-          msg: "Duplicate entry detected (mobile/admission already exists)",
+          msg: `${field} already exists ❌`,
         });
       }
 
@@ -106,7 +112,6 @@ router.post(
     }
   }
 );
-
 /* ================= GET STUDENTS ================= */
 router.get("/", authMiddleware, async (req, res) => {
   try {
