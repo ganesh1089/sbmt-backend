@@ -5,11 +5,12 @@ import Marks from "../models/Marks.js";
 
 const router = express.Router();
 
-// ================= STUDENT REPORT BY ID =================
+// ================= QR STUDENT REPORT =================
 router.get("/student/:token", async (req, res) => {
   try {
     const { token } = req.params;
 
+    // 🔥 FIND STUDENT BY QR TOKEN
     const student = await Student.findOne({ qrToken: token });
 
     if (!student) {
@@ -18,51 +19,65 @@ router.get("/student/:token", async (req, res) => {
 
     const today = new Date().toISOString().split("T")[0];
 
-    const attendanceDoc = await Attendance.findOne({ date: today });
+    // 🔥 TODAY ATTENDANCE ONLY (optimized)
+    const todayAttendance = await Attendance.findOne({
+      date: today
+    });
 
     let todayStatus = "N/A";
 
-    if (attendanceDoc) {
-      const record = attendanceDoc.records.find(
+    if (todayAttendance) {
+      const record = todayAttendance.records.find(
         r => String(r.studentId) === String(student._id)
       );
+
       todayStatus = record?.status || "N/A";
     }
 
+    // 🔥 MARKS
     const marks = await Marks.find({ studentId: student._id });
 
-    const allAttendance = await Attendance.find();
+    // 🔥 ATTENDANCE PERCENTAGE (optimized idea)
+    const attendanceDocs = await Attendance.find({
+      "records.studentId": student._id
+    });
 
     let total = 0;
     let present = 0;
 
-    allAttendance.forEach(day => {
-      const rec = day.records.find(
+    attendanceDocs.forEach(doc => {
+      const rec = doc.records.find(
         r => String(r.studentId) === String(student._id)
       );
+
       if (rec) {
         total++;
         if (rec.status === "P") present++;
       }
     });
 
-    const percentage = total ? Math.round((present / total) * 100) : 0;
+    const percentage = total
+      ? Math.round((present / total) * 100)
+      : 0;
 
+    // 🔥 FINAL RESPONSE
     return res.json({
-      _id: student._id,
-      name: student.name,
-      fatherName: student.fatherName,
-      className: student.className,
-      mobile: student.mobile,
-      photo: student.photo,
-      admissionNo: student.admissionNo,
+      student: {
+        _id: student._id,
+        name: student.name,
+        fatherName: student.fatherName,
+        className: student.className,
+        mobile: student.mobile,
+        photo: student.photo,
+        admissionNo: student.admissionNo
+      },
       todayAttendance: todayStatus,
-      monthlyAttendance: percentage,
+      attendancePercentage: percentage,
       marks
     });
 
   } catch (err) {
-    console.log("QR ERROR:", err);
+    console.log("QR REPORT ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 });

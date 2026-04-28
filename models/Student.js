@@ -1,83 +1,85 @@
 import mongoose from "mongoose";
 
-const studentSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true
+const studentSchema = new mongoose.Schema(
+  {
+    // 👤 BASIC INFO
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
+
+    fatherName: {
+      type: String,
+      trim: true
+    },
+
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other"]
+    },
+
+    dob: {
+      type: Date,
+      required: true
+    },
+
+    // 🏫 ACADEMIC INFO
+    className: {
+      type: String,
+      required: true,
+      index: true
+    },
+
+    rollNo: {
+      type: Number,
+      required: true
+    },
+
+    // 🔥 UNIQUE IDENTIFIER (FOR QR + SYSTEM)
+    admissionNo: {
+      type: String,
+      unique: true,
+      index: true
+    },
+
+    qrToken: {
+      type: String,
+      unique: true,
+      index: true
+    },
+
+    // 📞 CONTACT
+    mobile: {
+      type: String,
+      trim: true
+    },
+
+    address: {
+      type: String,
+      trim: true
+    },
+
+    // 🖼️ PHOTO
+    photo: {
+      type: String // filename or URL
+    },
+
+    // 🔐 SYSTEM INFO
+    addedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Teacher"
+    }
   },
-
-  fatherName: {
-    type: String,
-    trim: true
-  },
-
-  mobile: {
-    type: String,
-    required: true,
-    unique: true, // 🔥 login username banega
-    index: true
-  },
-
-  gender: String,
-
-  dob: {
-    type: String,
-    required: true
-  },
-
-  className: {
-    type: String,
-    required: true,
-    index: true
-  },
-
-  rollNo: {
-    type: Number,
-    required: true
-  },
-
-  // 🔥 NEW FIELDS START
-  address: {
-    type: String,
-    trim: true
-  },
-
-  photo: {
-    type: String // filename store hoga
-  },
-
-  admissionNo: {
-    type: String,
-    unique: true,
-    index: true
-  },
-
-  qrToken: {
-    type: String
-  },
-  // 🔥 NEW FIELDS END
-
-  // 🔐 LOGIN FIELDS
-  username: {
-    type: String,
-    unique: true
-  },
-
-  password: {
-    type: String
-  },
-
-  addedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Teacher"
+  {
+    timestamps: true
   }
+);
 
-}, {
-  timestamps: true
-});
-
-// 🔥 UNIQUE CLASS + ROLL NO (as it is)
+/**
+ * 🔥 IMPORTANT INDEX
+ * same class me duplicate rollNo allow nahi hoga
+ */
 studentSchema.index({ className: 1, rollNo: 1 }, { unique: true });
 
 export default mongoose.model("Student", studentSchema);

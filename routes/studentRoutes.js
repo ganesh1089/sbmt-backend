@@ -192,4 +192,28 @@ router.get("/:id", authMiddleware, async (req, res) => {
   }
 });
 
+router.get("/id-card/:id", authMiddleware, async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+
+    if (!student) {
+      return res.status(404).json({ msg: "Student not found" });
+    }
+
+    return res.json({
+      _id: student._id,
+      name: student.name,
+      fatherName: student.fatherName,
+      className: student.className,
+      rollNo: student.rollNo,
+      admissionNo: student.admissionNo,
+      photo: student.photo,
+      qrToken: student.qrToken
+    });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
 export default router;
