@@ -6,7 +6,6 @@ import upload from "../middleware/upload.js";
 const router = express.Router();
 
 /* ================= ADD STUDENT ================= */
-// ================= ADD STUDENT (FIXED) =================
 router.post(
   "/add",
   authMiddleware,
@@ -25,11 +24,11 @@ router.post(
         return res.status(400).json({ msg: "Required fields missing" });
       }
 
-      // 🔥 CLEAN MOBILE (IMPORTANT FIX)
+      // 🔥 CLEAN DATA
       const cleanMobile = String(mobile).trim();
 
-      // ❌ REMOVE strict findOne (causing fake conflicts sometimes)
-      const mobileExists = await Student.exists({
+      // 🔥 CLASS-WISE MOBILE CHECK (SAFE)
+      const mobileExists = await Student.findOne({
         mobile: cleanMobile,
         className: teacherClass,
       });
@@ -40,20 +39,23 @@ router.post(
         });
       }
 
-      // rollNo safe
+      // 🔥 ROLL NUMBER SAFE
       const lastStudent = await Student.findOne({ className: teacherClass })
         .sort({ rollNo: -1 })
         .lean();
 
       const rollNo = (lastStudent?.rollNo || 0) + 1;
 
+      // 🔥 ADMISSION NO
       const year = new Date().getFullYear();
       const count = await Student.countDocuments({ className: teacherClass });
 
       const admissionNo = `SBMT-${year}-${String(count + 1).padStart(3, "0")}`;
 
+      // 🔥 QR TOKEN (UNIQUE)
       const qrToken =
-        Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+        Date.now().toString(36) +
+        Math.random().toString(36).substring(2, 8);
 
       const photo = req.file ? req.file.filename : "";
 
@@ -61,6 +63,8 @@ router.post(
         name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
 
       const password = `${capName}@${new Date(dob).getFullYear()}`;
+
+      // ❌ NO username, NO extra fields
 
       const newStudent = await Student.create({
         name,
@@ -74,12 +78,11 @@ router.post(
         rollNo,
         admissionNo,
         qrToken,
-        username: cleanMobile,
         password,
         addedBy: req.teacher._id,
       });
 
-      return res.json({
+      return res.status(201).json({
         message: "Student added successfully ✅",
         student: newStudent,
       });
@@ -92,7 +95,7 @@ router.post(
         const field = Object.keys(err.keyPattern || {})[0];
 
         return res.status(409).json({
-          msg: `${field} already exists ❌ (duplicate detected)`,
+          msg: `${field} already exists ❌`,
         });
       }
 
