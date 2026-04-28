@@ -28,26 +28,36 @@ router.post(
         });
       }
 
-      // 🔥 roll number
+      // ================= DUPLICATE MOBILE CHECK (IMPORTANT FIX) =================
+      const existing = await Student.findOne({ mobile });
+      if (existing) {
+        return res.status(409).json({
+          msg: "This mobile number already exists ❌",
+        });
+      }
+
+      // roll number
       const lastStudent = await Student.findOne({
         className: teacherClass,
       }).sort({ rollNo: -1 });
 
       const rollNo = lastStudent?.rollNo ? lastStudent.rollNo + 1 : 1;
 
-      // 🔥 admission number
+      // admission number
       const year = new Date().getFullYear();
       const count = await Student.countDocuments({ className: teacherClass });
 
-      const admissionNo = `SBMT-0687-${year}-${String(count + 1).padStart(3, "0")}`;
+      const admissionNo = `SBMT-0687-${year}-${String(count + 1).padStart(
+        3,
+        "0"
+      )}`;
 
-      // 🔥 QR token
-      const qrToken = Math.random().toString(36).substring(2, 10);
+      // safer QR token (more unique)
+      const qrToken =
+        Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
 
-      // 🔥 photo
       const photo = req.file ? req.file.filename : "";
 
-      // 🔐 login credentials
       const username = mobile;
 
       const capName =
@@ -76,17 +86,25 @@ router.post(
       await newStudent.save();
 
       return res.json({
-        message: "Student added + login created ✅",
+        message: "Student added successfully ✅",
+        student: newStudent,
         username,
         password,
         admissionNo,
-        student: newStudent,
       });
     } catch (err) {
       console.error("ADD STUDENT ERROR:", err);
+
+      // 🔥 Mongo duplicate safety (backup)
+      if (err.code === 11000) {
+        return res.status(409).json({
+          msg: "Duplicate entry detected (mobile/admission already exists)",
+        });
+      }
+
       return res.status(500).json({ msg: "Server error" });
     }
-  },
+  }
 );
 
 /* ================= GET STUDENTS ================= */
@@ -96,9 +114,7 @@ router.get("/", authMiddleware, async (req, res) => {
 
     const filter = isHod ? {} : { className: req.teacher?.className };
 
-    const students = await Student.find(filter);
-
-    students.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    const students = await Student.find(filter).sort({ name: 1 });
 
     return res.json(
       students.map((s, i) => ({
@@ -111,8 +127,8 @@ router.get("/", authMiddleware, async (req, res) => {
         rollNo: s.rollNo,
         admissionNo: s.admissionNo,
         photo: s.photo,
-        qrToken: s.qrToken, // 🔥 IMPORTANT FOR ID CARD
-      })),
+        qrToken: s.qrToken,
+      }))
     );
   } catch (err) {
     console.error("GET STUDENTS ERROR:", err);
@@ -135,13 +151,12 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid password" });
     }
 
-    // 🔥 alphabetical SR NO
-    const students = await Student.find({ className: student.className }).sort({
-      name: 1,
-    });
+    const students = await Student.find({
+      className: student.className,
+    }).sort({ name: 1 });
 
     const index = students.findIndex(
-      (s) => String(s._id) === String(student._id),
+      (s) => String(s._id) === String(student._id)
     );
 
     return res.json({
@@ -161,6 +176,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
+/* ================= GET BY ID ================= */
 router.get("/:id", authMiddleware, async (req, res) => {
   try {
     const student = await Student.findById(req.params.id);
@@ -170,10 +186,10 @@ router.get("/:id", authMiddleware, async (req, res) => {
     }
 
     res.json(student);
-
   } catch (err) {
     console.log(err);
     res.status(500).json({ msg: "Server error" });
   }
 });
+
 export default router;
