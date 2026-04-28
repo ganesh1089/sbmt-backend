@@ -6,15 +6,11 @@ import Marks from "../models/Marks.js";
 const router = express.Router();
 
 // ================= STUDENT REPORT BY ID =================
-router.get("/student/:id", async (req, res) => {
+router.get("/student/:token", async (req, res) => {
   try {
-    const { id } = req.params;
+    const { token } = req.params;
 
-    if (!id || id === "null") {
-      return res.status(400).json({ message: "Invalid student id" });
-    }
-
-    const student = await Student.findById(id);
+    const student = await Student.findOne({ qrToken: token });
 
     if (!student) {
       return res.status(404).json({ message: "Student not found" });
