@@ -6,6 +6,7 @@ import upload from "../middleware/upload.js";
 const router = express.Router();
 
 /* ================= ADD STUDENT ================= */
+// ================= ADD STUDENT (FIXED) =================
 router.post(
   "/add",
   authMiddleware,
@@ -15,96 +16,83 @@ router.post(
       const teacherClass = req.teacher?.className?.trim();
 
       if (!teacherClass) {
-        return res.status(403).json({
-          msg: "Teacher class not assigned or token invalid",
-        });
+        return res.status(403).json({ msg: "Teacher class not assigned" });
       }
 
       const { name, fatherName, mobile, gender, dob, address } = req.body;
 
       if (!name || !fatherName || !mobile || !dob) {
-        return res.status(400).json({
-          msg: "Name, Father Name, Mobile, DOB required",
-        });
+        return res.status(400).json({ msg: "Required fields missing" });
       }
 
-      // ================= MOBILE DUPLICATE CHECK =================
-      const existing = await Student.findOne({ mobile });
-      if (existing) {
+      // 🔥 CLEAN MOBILE (IMPORTANT FIX)
+      const cleanMobile = String(mobile).trim();
+
+      // ❌ REMOVE strict findOne (causing fake conflicts sometimes)
+      const mobileExists = await Student.exists({
+        mobile: cleanMobile,
+        className: teacherClass,
+      });
+
+      if (mobileExists) {
         return res.status(409).json({
-          msg: "This mobile number already exists ❌",
+          msg: "Mobile already exists in this class ❌",
         });
       }
 
-      // ================= SAFE ADMISSION NUMBER GENERATION =================
-      const year = new Date().getFullYear();
-
+      // rollNo safe
       const lastStudent = await Student.findOne({ className: teacherClass })
-        .sort({ createdAt: -1 })
+        .sort({ rollNo: -1 })
         .lean();
 
-      let nextNumber = 1;
+      const rollNo = (lastStudent?.rollNo || 0) + 1;
 
-      if (lastStudent?.admissionNo) {
-        const match = lastStudent.admissionNo.match(/(\d+)$/);
-        if (match) {
-          nextNumber = parseInt(match[1]) + 1;
-        }
-      }
+      const year = new Date().getFullYear();
+      const count = await Student.countDocuments({ className: teacherClass });
 
-      const admissionNo = `SBMT-0687-${year}-${String(nextNumber).padStart(3, "0")}`;
+      const admissionNo = `SBMT-${year}-${String(count + 1).padStart(3, "0")}`;
 
-      // ================= QR TOKEN =================
       const qrToken =
         Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
 
-      // ================= PHOTO =================
       const photo = req.file ? req.file.filename : "";
-
-      const username = mobile;
 
       const capName =
         name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
 
-      const yearOfBirth = new Date(dob).getFullYear();
-      const password = `${capName}@${yearOfBirth}`;
+      const password = `${capName}@${new Date(dob).getFullYear()}`;
 
-      const newStudent = new Student({
+      const newStudent = await Student.create({
         name,
         fatherName,
-        mobile,
+        mobile: cleanMobile,
         gender,
         dob,
         address,
         photo,
         className: teacherClass,
-        rollNo: 1, // (optional: tu later fix kar sakta hai proper sequencing)
+        rollNo,
         admissionNo,
         qrToken,
-        username,
+        username: cleanMobile,
         password,
         addedBy: req.teacher._id,
       });
 
-      await newStudent.save();
-
       return res.json({
         message: "Student added successfully ✅",
         student: newStudent,
-        username,
-        password,
-        admissionNo,
       });
 
     } catch (err) {
       console.error("ADD STUDENT ERROR:", err);
 
-      // ================= SAFER ERROR HANDLING =================
+      // 🔥 SAFE DUPLICATE HANDLING
       if (err.code === 11000) {
-        const field = Object.keys(err.keyPattern || {})[0] || "field";
+        const field = Object.keys(err.keyPattern || {})[0];
 
         return res.status(409).json({
-          msg: `${field} already exists ❌`,
+          msg: `${field} already exists ❌ (duplicate detected)`,
         });
       }
 
