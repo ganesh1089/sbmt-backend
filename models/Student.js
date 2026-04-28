@@ -36,39 +36,24 @@ const studentSchema = new mongoose.Schema(
       required: true,
     },
 
-    // 🔥 UNIQUE IDENTIFIERS (SYSTEM CORE)
+    // 🔥 UNIQUE IDENTIFIERS
     admissionNo: {
       type: String,
-      required: true,
       unique: true,
       index: true,
     },
 
     qrToken: {
       type: String,
-      required: true,
       unique: true,
       index: true,
     },
 
-    // 📞 CONTACT (NOT UNIQUE - ALLOWED MULTIPLE)
+    // 📞 CONTACT
     mobile: {
       type: String,
       trim: true,
-      index: true,
-    },
-
-    // 🔐 LOGIN SYSTEM
-    username: {
-      type: String,
-      required: true,
-      unique: true,
-      index: true,
-    },
-
-    password: {
-      type: String,
-      required: true,
+      index: true, // 🔥 better search + safety
     },
 
     address: {
@@ -92,7 +77,7 @@ const studentSchema = new mongoose.Schema(
   }
 );
 
-/* 🔥 IMPORTANT RULE: CLASS + ROLL UNIQUE */
+// 🔥 UNIQUE CLASS + ROLL NO (IMPORTANT)
 studentSchema.index({ className: 1, rollNo: 1 }, { unique: true });
 
 export default mongoose.model("Student", studentSchema);
