@@ -24,35 +24,22 @@ router.post(
         return res.status(400).json({ msg: "Required fields missing" });
       }
 
-      // 🔥 CLEAN DATA
       const cleanMobile = String(mobile).trim();
 
-      // 🔥 CLASS-WISE MOBILE CHECK (SAFE)
-      const mobileExists = await Student.findOne({
-        mobile: cleanMobile,
-        className: teacherClass,
-      });
+      // ❌ REMOVED MOBILE DUPLICATE CHECK (IMPORTANT CHANGE)
 
-      if (mobileExists) {
-        return res.status(409).json({
-          msg: "Mobile already exists in this class ❌",
-        });
-      }
-
-      // 🔥 ROLL NUMBER SAFE
+      // 🔥 rollNo safe
       const lastStudent = await Student.findOne({ className: teacherClass })
         .sort({ rollNo: -1 })
         .lean();
 
       const rollNo = (lastStudent?.rollNo || 0) + 1;
 
-      // 🔥 ADMISSION NO
       const year = new Date().getFullYear();
       const count = await Student.countDocuments({ className: teacherClass });
 
       const admissionNo = `SBMT-${year}-${String(count + 1).padStart(3, "0")}`;
 
-      // 🔥 QR TOKEN (UNIQUE)
       const qrToken =
         Date.now().toString(36) +
         Math.random().toString(36).substring(2, 8);
@@ -63,8 +50,6 @@ router.post(
         name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
 
       const password = `${capName}@${new Date(dob).getFullYear()}`;
-
-      // ❌ NO username, NO extra fields
 
       const newStudent = await Student.create({
         name,
@@ -90,10 +75,8 @@ router.post(
     } catch (err) {
       console.error("ADD STUDENT ERROR:", err);
 
-      // 🔥 SAFE DUPLICATE HANDLING
       if (err.code === 11000) {
         const field = Object.keys(err.keyPattern || {})[0];
-
         return res.status(409).json({
           msg: `${field} already exists ❌`,
         });
