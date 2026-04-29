@@ -127,10 +127,18 @@ router.get("/", authMiddleware, async (req, res) => {
 /* ================= LOGIN (FIXED) ================= */
 router.post("/login", async (req, res) => {
   try {
-    const { username, password } = req.body;
+    let { username, password } = req.body;
 
-    // ✅ username = mobile now
-    const student = await Student.findOne({ mobile: username });
+    // ✅ safety clean
+    username = username.trim().toLowerCase();
+    password = password.trim();
+
+    console.log("LOGIN TRY:", username, password);
+
+    // ✅ find student
+    const student = await Student.findOne({ username });
+
+    console.log("FOUND STUDENT:", student);
 
     if (!student) {
       return res.status(400).json({ message: "Student not found" });
@@ -140,31 +148,24 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid password" });
     }
 
-    const students = await Student.find({
-      className: student.className,
-    }).sort({ name: 1 });
-
-    const index = students.findIndex(
-      (s) => String(s._id) === String(student._id)
-    );
-
     return res.json({
       message: "Login success",
       student: {
         id: student._id,
         name: student.name,
         className: student.className,
-        rollNo: index + 1,
+        rollNo: student.rollNo,
         admissionNo: student.admissionNo,
         photo: student.photo,
         qrToken: student.qrToken,
       },
     });
+
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    console.log("LOGIN ERROR:", err);
+    return res.status(500).json({ message: "Server error" });
   }
 });
-
 /* ================= ID CARD ROUTE (IMPORTANT ORDER FIX) ================= */
 router.get("/id-card/:id", authMiddleware, async (req, res) => {
   try {
