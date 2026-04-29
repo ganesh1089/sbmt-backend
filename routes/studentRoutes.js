@@ -26,31 +26,43 @@ router.post(
 
       const cleanMobile = String(mobile).trim();
 
-      // roll number
+      // ================= ROLL NO =================
       const lastStudent = await Student.findOne({ className: teacherClass })
         .sort({ rollNo: -1 })
         .lean();
 
       const rollNo = (lastStudent?.rollNo || 0) + 1;
 
-      // admission number
+      // ================= ADMISSION NO =================
       const year = new Date().getFullYear();
       const count = await Student.countDocuments({ className: teacherClass });
 
       const admissionNo = `SBMT-${year}-${String(count + 1).padStart(3, "0")}`;
 
-      // QR token
+      // ================= QR TOKEN =================
       const qrToken =
         Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
 
       const photo = req.file ? req.file.filename : "";
 
+      // ================= NAME PROCESS =================
+      const firstName = name.split(" ")[0].toLowerCase(); // ganesh
+      const last2Digits = cleanMobile.slice(-2); // 89
+
+      // ================= USERNAME =================
+      const username = `${firstName}${year}${last2Digits}`;
+      // example: ganesh202689
+
+      // ================= PASSWORD =================
       const capName =
-        name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+        firstName.charAt(0).toUpperCase() + firstName.slice(1);
 
-      const password = `${capName}@${new Date(dob).getFullYear()}`;
+      const dobYear = new Date(dob).getFullYear();
 
-      // ✅ NO username field (FIXED)
+      const password = `${capName}@${dobYear}`;
+      // example: Ganesh@2004
+
+      // ================= CREATE STUDENT =================
       const newStudent = await Student.create({
         name,
         fatherName,
@@ -63,6 +75,7 @@ router.post(
         rollNo,
         admissionNo,
         qrToken,
+        username, // ✅ ADDED
         password,
         addedBy: req.teacher._id,
       });
@@ -70,14 +83,18 @@ router.post(
       return res.json({
         message: "Student added successfully ✅",
         student: newStudent,
+        credentials: {
+          username,
+          password,
+        },
       });
+
     } catch (err) {
       console.error("ADD STUDENT ERROR:", err);
       return res.status(500).json({ msg: "Server error" });
     }
   }
 );
-
 /* ================= GET STUDENTS ================= */
 router.get("/", authMiddleware, async (req, res) => {
   try {

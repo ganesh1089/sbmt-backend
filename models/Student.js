@@ -53,7 +53,7 @@ const studentSchema = new mongoose.Schema(
     mobile: {
       type: String,
       trim: true,
-      index: true, // 🔥 better search + safety
+      index: true,
     },
 
     address: {
@@ -64,6 +64,19 @@ const studentSchema = new mongoose.Schema(
     // 🖼️ PHOTO
     photo: {
       type: String,
+    },
+
+    // 🔐 LOGIN CREDENTIALS (🔥 NEW)
+    username: {
+      type: String,
+      required: true,
+      unique: true,   // ⚠️ important
+      index: true,
+    },
+
+    password: {
+      type: String,
+      required: true,
     },
 
     // 🔐 SYSTEM INFO
