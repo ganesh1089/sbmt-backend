@@ -1,12 +1,11 @@
 import express from "express";
 import Teacher from "../models/Teacher.js";
 import TeacherRole from "../models/TeacherRole.js";
-import jwt from "jsonwebtoken";
 
 const router = express.Router();
 
 /* =========================
-   ADD TEACHER (UPDATED ✅)
+   ADD TEACHER
 ========================= */
 router.post("/add", async (req, res) => {
   try {
@@ -24,18 +23,15 @@ router.post("/add", async (req, res) => {
       return res.status(400).json({ message: "Teacher already exists" });
     }
 
-    // 🔥 FIX: generate credentials at creation time
-    const username = email.split("@")[0] + "_" + Math.floor(Math.random() * 1000);
-    const password = name + "@123";
-
+    // ✅ NO credentials here
     const teacher = new Teacher({
       name,
       email,
       mobile: mobile || "",
       subject: "",
       className: "",
-      username,
-      password,   // ⚠️ now NOT null
+      username: null,
+      password: null,
     });
 
     await teacher.save();
@@ -50,8 +46,9 @@ router.post("/add", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
 /* =========================
-   GET ALL TEACHERS (UPDATED ✅)
+   GET ALL TEACHERS
 ========================= */
 router.get("/all", async (req, res) => {
   try {
@@ -79,7 +76,7 @@ router.get("/all", async (req, res) => {
       }
     });
 
-    // ✅ Unassigned teachers bhi add karo
+    // ✅ Unassigned teachers
     teachers.forEach(t => {
       const hasRole = roles.some(
         r => r.teacherId.toString() === t._id.toString()
@@ -107,7 +104,7 @@ router.get("/all", async (req, res) => {
 });
 
 /* =========================
-   ASSIGN TEACHER (NO CHANGE ✅)
+   ASSIGN TEACHER
 ========================= */
 router.post("/assign", async (req, res) => {
   try {
@@ -124,10 +121,10 @@ router.post("/assign", async (req, res) => {
       return res.status(400).json({ message: "Teacher not found" });
     }
 
-    // ================= CLASS TEACHER =================
+    /* ===== CLASS TEACHER ===== */
     if (roleType === "classTeacher") {
 
-      // ❌ only one class teacher per class
+      // ❌ Only one class teacher per class
       const existing = await TeacherRole.findOne({
         role: "class_teacher",
         classId: className
@@ -153,10 +150,10 @@ router.post("/assign", async (req, res) => {
         subjectId: subject
       }).save();
 
-      teacher.className = className;
-      teacher.subject = subject || "";
+      // ✅ credentials only for class teacher
       teacher.username = username;
       teacher.password = password;
+      teacher.subject = subject || "";
 
       await teacher.save();
 
@@ -167,9 +164,8 @@ router.post("/assign", async (req, res) => {
       });
     }
 
-    // ================= SUBJECT TEACHER =================
+    /* ===== SUBJECT TEACHER ===== */
 
-    // 🔥 duplicate check (only for subject teacher)
     const alreadyAssigned = await TeacherRole.findOne({
       teacherId,
       classId: className,
@@ -190,7 +186,7 @@ router.post("/assign", async (req, res) => {
       subjectId: subject
     }).save();
 
-    teacher.className = className;
+    // ❌ DO NOT set className here
     teacher.subject = subject;
 
     await teacher.save();
@@ -205,54 +201,8 @@ router.post("/assign", async (req, res) => {
   }
 });
 
-
 /* =========================
-   🔐 TEACHER LOGIN (NO CHANGE)
-========================= */
-router.post("/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
-
-    const teacher = await Teacher.findOne({ username });
-
-    if (!teacher || teacher.password !== password) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
-
-    const role = await TeacherRole.findOne({ teacherId: teacher._id });
-
-    const token = jwt.sign(
-      {
-        teacherId: teacher._id,
-        role: role?.role || "subject_teacher",
-        className: teacher.className
-      },
-      "secretkey",
-      { expiresIn: "365d" }
-    );
-
-    res.json({
-      message: "Login success",
-      token,
-      teacher: {
-        id: teacher._id,
-        name: teacher.name,
-        username: teacher.username,
-        className: teacher.className,
-        subject: teacher.subject,
-        role: role?.role || "subject_teacher"
-      }
-    });
-
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-
-/* =========================
-   📚 CLASS - TEACHER MAPPING
+   CLASS - TEACHER MAPPING
 ========================= */
 router.get("/class-teachers", async (req, res) => {
   try {
@@ -280,7 +230,6 @@ router.get("/class-teachers", async (req, res) => {
       });
     }
 
-    // 🔥 convert object → array (frontend ke liye)
     const result = Object.keys(grouped).map(cls => ({
       className: cls,
       teachers: grouped[cls]
@@ -293,4 +242,5 @@ router.get("/class-teachers", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
 export default router;
