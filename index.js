@@ -59,6 +59,7 @@ app.use("/uploads", express.static(uploadPath));
 import authRoutes from "./routes/auth.js";
 import protectedRoutes from "./routes/protected.js";
 import teacherRoutes from "./routes/teacherRoutes.js";
+import teacherAuth from "./routes/teacherAuth.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import attendanceRoutes from "./routes/attendance.js";
 import marksRoutes from "./routes/marksRoutes.js";
@@ -71,6 +72,7 @@ import qrRoutes from "./routes/qrRoutes.js";
 app.use("/api/auth", authRoutes);
 app.use("/api", protectedRoutes);
 app.use("/api/teacher", teacherRoutes);
+app.use("/api/teacher", teacherAuth);
 app.use("/api/dashboard", dashboardRoutes);
 
 app.use("/api/hod", hodAuthRoutes);
