@@ -2,21 +2,30 @@ import express from "express";
 import authMiddleware from "../middleware/auth.js";
 import Student from "../models/Student.js";
 import upload from "../middleware/upload.js";
-
+import TeacherRole from "../models/TeacherRole.js";
 const router = express.Router();
 
-/* ================= ADD STUDENT (FINAL FIX) ================= */
+/* ================= ADD STUDENT (FINAL FIXED 🔥) ================= */
 router.post(
   "/add",
   authMiddleware,
   upload.single("photo"),
   async (req, res) => {
     try {
-      const teacherClass = req.teacher?.className?.trim();
 
-      if (!teacherClass) {
-        return res.status(403).json({ msg: "Teacher class not assigned" });
+      // ✅ 🔥 GET CLASS FROM ROLE (NOT TOKEN)
+      const role = await TeacherRole.findOne({
+        teacherId: req.teacher.teacherId,
+        role: "class_teacher"
+      });
+
+      if (!role) {
+        return res.status(403).json({
+          msg: "Only class teacher can add students"
+        });
       }
+
+      const teacherClass = role.classId; // ✅ FINAL CLASS
 
       const { name, fatherName, mobile, gender, dob, address } = req.body;
 
@@ -45,13 +54,11 @@ router.post(
 
       const photo = req.file ? req.file.filename : "";
 
-      // ================= NAME PROCESS =================
-      const firstName = name.split(" ")[0].toLowerCase(); // ganesh
-      const last2Digits = cleanMobile.slice(-2); // 89
-
       // ================= USERNAME =================
+      const firstName = name.split(" ")[0].toLowerCase();
+      const last2Digits = cleanMobile.slice(-2);
+
       const username = `${firstName}${year}${last2Digits}`;
-      // example: ganesh202689
 
       // ================= PASSWORD =================
       const capName =
@@ -60,9 +67,8 @@ router.post(
       const dobYear = new Date(dob).getFullYear();
 
       const password = `${capName}@${dobYear}`;
-      // example: Ganesh@2004
 
-      // ================= CREATE STUDENT =================
+      // ================= CREATE =================
       const newStudent = await Student.create({
         name,
         fatherName,
@@ -75,9 +81,9 @@ router.post(
         rollNo,
         admissionNo,
         qrToken,
-        username, // ✅ ADDED
+        username,
         password,
-        addedBy: req.teacher._id,
+        addedBy: req.teacher.teacherId, // ✅ FIXED
       });
 
       return res.json({
