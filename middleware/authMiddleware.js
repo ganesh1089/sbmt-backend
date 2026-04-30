@@ -12,7 +12,7 @@ const authMiddleware = (req, res, next) => {
 
     const decoded = jwt.verify(token, "secretkey");
 
-    req.user = decoded; // { userId, role }
+    req.teacher = decoded; // 🔥 FIXED
 
     next();
   } catch (error) {

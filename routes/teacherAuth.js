@@ -10,7 +10,7 @@ router.post("/login", async (req, res) => {
     let { username, password } = req.body;
 
     // ✅ clean input
-    username = username.trim().toLowerCase();
+    username = username.trim();
     password = password.trim();
 
     // ✅ find teacher
@@ -20,25 +20,36 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // ✅ get class teacher role
-    const roleData = await TeacherRole.findOne({
-      teacherId: teacher._id,
-      role: "class_teacher"
+    console.log("LOGIN TEACHER:", teacher._id);
+
+    // ✅ get ALL roles of teacher
+    const roles = await TeacherRole.find({
+      teacherId: teacher._id
     });
 
-    // ✅ class ALWAYS from role (FINAL FIX)
-    const className = roleData ? roleData.classId : "";
+    console.log("ALL ROLES:", roles);
+
+    // ✅ find class teacher role
+    const classRole = roles.find(r => r.role === "class_teacher");
+
+    const isClassTeacher = !!classRole;
+    const className = isClassTeacher ? classRole.classId : "";
 
     // ✅ token
     const token = jwt.sign(
       {
         teacherId: teacher._id,
-        role: roleData ? "class_teacher" : "subject_teacher",
+        role: isClassTeacher ? "class_teacher" : "subject_teacher",
         className
       },
       "secretkey",
       { expiresIn: "365d" }
     );
+
+    console.log("FINAL TOKEN:", {
+      role: isClassTeacher ? "class_teacher" : "subject_teacher",
+      className
+    });
 
     // ✅ response
     res.json({
@@ -49,7 +60,7 @@ router.post("/login", async (req, res) => {
         name: teacher.name,
         username: teacher.username,
         className,
-        role: roleData ? "class_teacher" : "subject_teacher"
+        role: isClassTeacher ? "class_teacher" : "subject_teacher"
       }
     });
 

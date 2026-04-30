@@ -13,19 +13,20 @@ router.post(
   async (req, res) => {
     try {
 
-      // ✅ 🔥 GET CLASS FROM ROLE (NOT TOKEN)
-      const role = await TeacherRole.findOne({
-        teacherId: req.teacher.teacherId,
-        role: "class_teacher"
-      });
+      // ================= ROLE CHECK =================
+const role = await TeacherRole.findOne({
+  teacherId: req.teacher.teacherId,
+  role: "class_teacher",
+  classId: req.teacher.className
+});
 
-      if (!role) {
-        return res.status(403).json({
-          msg: "Only class teacher can add students"
-        });
-      }
+if (!role || !role.classId) {
+  return res.status(403).json({
+    msg: "Only class teacher can add students"
+  });
+}
 
-      const teacherClass = role.classId; // ✅ FINAL CLASS
+const teacherClass = role.classId;
 
       const { name, fatherName, mobile, gender, dob, address } = req.body;
 
