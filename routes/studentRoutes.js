@@ -62,11 +62,29 @@ const teacherClass = roleData.classId;
 
       const rollNo = (lastStudent?.rollNo || 0) + 1;
 
-      // ================= ADMISSION NO =================
-      const year = new Date().getFullYear();
-      const count = await Student.countDocuments({ className: teacherClass });
+     // ================= ADMISSION YEAR =================
+let admissionYear = new Date().getFullYear();
 
-      const admissionNo = `SBMT-${year}-${String(count + 1).padStart(3, "0")}`;
+if (teacherClass.includes("2nd-Year")) {
+  admissionYear -= 1;
+} else if (teacherClass.includes("3rd-Year")) {
+  admissionYear -= 2;
+}
+
+// ================= LAST STUDENT =================
+const lastStudent = await Student.findOne()
+  .sort({ createdAt: -1 })
+  .lean();
+
+let nextNumber = 1;
+
+if (lastStudent?.admissionNo) {
+  const lastNum = parseInt(lastStudent.admissionNo.split("-")[2]);
+  nextNumber = lastNum + 1;
+}
+
+// ================= FINAL ADMISSION NO =================
+const admissionNo = `SBMT-${admissionYear}-${String(nextNumber).padStart(3, "0")}`;
 
       // ================= QR TOKEN =================
       const qrToken =
@@ -113,9 +131,14 @@ const teacherClass = roleData.classId;
       });
 
     } catch (err) {
-      console.error("ADD STUDENT ERROR:", err);
-      return res.status(500).json({ msg: "Server error" });
-    }
+  console.error("ADD STUDENT ERROR FULL:", err);
+
+  return res.status(500).json({
+    msg: "Server error",
+    error: err.message,
+    stack: err.stack
+  });
+}
   }
 );
 
