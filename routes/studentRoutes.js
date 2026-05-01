@@ -3,9 +3,10 @@ import authMiddleware from "../middleware/auth.js";
 import Student from "../models/Student.js";
 import upload from "../middleware/upload.js";
 import TeacherRole from "../models/TeacherRole.js";
+
 const router = express.Router();
 
-/* ================= ADD STUDENT (FINAL FIXED 🔥) ================= */
+/* ================= ADD STUDENT (FINAL CLEAN FIX 🔥) ================= */
 router.post(
   "/add",
   authMiddleware,
@@ -13,20 +14,14 @@ router.post(
   async (req, res) => {
     try {
 
-      // ================= ROLE CHECK =================
-const role = await TeacherRole.findOne({
-  teacherId: req.teacher.teacherId,
-  role: "class_teacher",
-  classId: req.teacher.className
-});
+      // ✅ TAKE CLASS FROM TOKEN (MOST RELIABLE)
+      const teacherClass = req.teacher.className;
 
-if (!role || !role.classId) {
-  return res.status(403).json({
-    msg: "Only class teacher can add students"
-  });
-}
-
-const teacherClass = role.classId;
+      if (!teacherClass) {
+        return res.status(403).json({
+          msg: "Class not assigned to teacher"
+        });
+      }
 
       const { name, fatherName, mobile, gender, dob, address } = req.body;
 
@@ -36,32 +31,35 @@ const teacherClass = role.classId;
 
       const cleanMobile = String(mobile).trim();
 
-      // ================= ROLL NO =================
+      // ================= FIX: gender lowercase issue =================
+      const fixedGender =
+        gender?.toLowerCase() === "male"
+          ? "Male"
+          : gender?.toLowerCase() === "female"
+          ? "Female"
+          : gender;
+
       const lastStudent = await Student.findOne({ className: teacherClass })
         .sort({ rollNo: -1 })
         .lean();
 
       const rollNo = (lastStudent?.rollNo || 0) + 1;
 
-      // ================= ADMISSION NO =================
       const year = new Date().getFullYear();
       const count = await Student.countDocuments({ className: teacherClass });
 
       const admissionNo = `SBMT-${year}-${String(count + 1).padStart(3, "0")}`;
 
-      // ================= QR TOKEN =================
       const qrToken =
         Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
 
       const photo = req.file ? req.file.filename : "";
 
-      // ================= USERNAME =================
       const firstName = name.split(" ")[0].toLowerCase();
       const last2Digits = cleanMobile.slice(-2);
 
       const username = `${firstName}${year}${last2Digits}`;
 
-      // ================= PASSWORD =================
       const capName =
         firstName.charAt(0).toUpperCase() + firstName.slice(1);
 
@@ -69,12 +67,11 @@ const teacherClass = role.classId;
 
       const password = `${capName}@${dobYear}`;
 
-      // ================= CREATE =================
       const newStudent = await Student.create({
         name,
         fatherName,
         mobile: cleanMobile,
-        gender,
+        gender: fixedGender,   // 🔥 FIX HERE
         dob,
         address,
         photo,
@@ -84,16 +81,13 @@ const teacherClass = role.classId;
         qrToken,
         username,
         password,
-        addedBy: req.teacher.teacherId, // ✅ FIXED
+        addedBy: req.teacher.teacherId,
       });
 
       return res.json({
         message: "Student added successfully ✅",
         student: newStudent,
-        credentials: {
-          username,
-          password,
-        },
+        credentials: { username, password },
       });
 
     } catch (err) {
@@ -107,7 +101,9 @@ router.get("/", authMiddleware, async (req, res) => {
   try {
     const isHod = req.teacher?.role === "hod";
 
-    const filter = isHod ? {} : { className: req.teacher?.className };
+    const filter = isHod
+      ? {}
+      : { className: req.teacher?.className };
 
     const students = await Student.find(filter).sort({ name: 1 });
 
@@ -131,21 +127,15 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 });
 
-/* ================= LOGIN (FIXED) ================= */
+/* ================= LOGIN ================= */
 router.post("/login", async (req, res) => {
   try {
     let { username, password } = req.body;
 
-    // ✅ safety clean
     username = username.trim().toLowerCase();
     password = password.trim();
 
-    console.log("LOGIN TRY:", username, password);
-
-    // ✅ find student
     const student = await Student.findOne({ username });
-
-    console.log("FOUND STUDENT:", student);
 
     if (!student) {
       return res.status(400).json({ message: "Student not found" });
@@ -173,7 +163,8 @@ router.post("/login", async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 });
-/* ================= ID CARD ROUTE (IMPORTANT ORDER FIX) ================= */
+
+/* ================= ID CARD ================= */
 router.get("/id-card/:id", authMiddleware, async (req, res) => {
   try {
     const student = await Student.findById(req.params.id);

@@ -5,54 +5,43 @@ import jwt from "jsonwebtoken";
 
 const router = express.Router();
 
+/* ================= LOGIN ================= */
 router.post("/login", async (req, res) => {
   try {
-    let { username, password } = req.body;
+    const { username, password } = req.body;
 
-    // ✅ clean input
-    username = username.trim();
-    password = password.trim();
+    const teacher = await Teacher.findOne({ username, password });
 
-    // ✅ find teacher
-    const teacher = await Teacher.findOne({ username });
-
-    if (!teacher || teacher.password !== password) {
+    if (!teacher) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    console.log("LOGIN TEACHER:", teacher._id);
-
-    // ✅ get ALL roles of teacher
-    const roles = await TeacherRole.find({
+    // ================= ROLE FETCH (FIXED LOGIC) =================
+    const roleData = await TeacherRole.findOne({
       teacherId: teacher._id
     });
 
-    console.log("ALL ROLES:", roles);
+    let role = "teacher";
+    let className = "";
 
-    // ✅ find class teacher role
-    const classRole = roles.find(r => r.role === "class_teacher");
+    if (roleData) {
+      role = roleData.role;        // class_teacher / subject_teacher
+      className = roleData.classId;
+    }
 
-    const isClassTeacher = !!classRole;
-    const className = isClassTeacher ? classRole.classId : "";
-
-    // ✅ token
+    // ================= TOKEN =================
     const token = jwt.sign(
       {
         teacherId: teacher._id,
-        role: isClassTeacher ? "class_teacher" : "subject_teacher",
+        role,
         className
       },
-      "secretkey",
-      { expiresIn: "365d" }
+      process.env.JWT_SECRET || "secretkey",
+      { expiresIn: "7d" }
     );
 
-    console.log("FINAL TOKEN:", {
-      role: isClassTeacher ? "class_teacher" : "subject_teacher",
-      className
-    });
-
-    // ✅ response
-    res.json({
+    // ================= RESPONSE =================
+    return res.json({
       message: "Login success",
       token,
       teacher: {
@@ -60,13 +49,13 @@ router.post("/login", async (req, res) => {
         name: teacher.name,
         username: teacher.username,
         className,
-        role: isClassTeacher ? "class_teacher" : "subject_teacher"
+        role
       }
     });
 
   } catch (err) {
     console.log("LOGIN ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 });
 

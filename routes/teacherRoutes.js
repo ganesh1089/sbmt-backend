@@ -124,45 +124,35 @@ router.post("/assign", async (req, res) => {
     /* ===== CLASS TEACHER ===== */
     if (roleType === "classTeacher") {
 
-      // ❌ Only one class teacher per class
-      const existing = await TeacherRole.findOne({
-        role: "class_teacher",
-        classId: className
-      });
+  const username =
+    teacher.name.replace(/\s/g, "").slice(0, 4).toLowerCase() +
+    "_" +
+    className.replace(/\s/g, "").toLowerCase();
 
-      if (existing) {
-        return res.status(400).json({
-          message: "This class already has a Class Teacher"
-        });
-      }
+  const password = teacher.name + "@687";
 
-      const username =
-        teacher.name.replace(/\s/g, "").slice(0, 4).toLowerCase() +
-        "_" +
-        className.replace(/\s/g, "").toLowerCase();
+  await new TeacherRole({
+    teacherId,
+    role: "class_teacher",
+    classId: className,
+    subjectId: subject
+  }).save();
 
-      const password = teacher.name + "@687";
+  // ✅ ADD THIS LINE (VERY IMPORTANT)
+  teacher.className = className;
 
-      await new TeacherRole({
-        teacherId,
-        role: "class_teacher",
-        classId: className,
-        subjectId: subject
-      }).save();
+  teacher.username = username;
+  teacher.password = password;
+  teacher.subject = subject || "";
 
-      // ✅ credentials only for class teacher
-      teacher.username = username;
-      teacher.password = password;
-      teacher.subject = subject || "";
+  await teacher.save();
 
-      await teacher.save();
-
-      return res.json({
-        message: "Class Teacher Assigned",
-        username,
-        password
-      });
-    }
+  return res.json({
+    message: "Class Teacher Assigned",
+    username,
+    password
+  });
+}
 
     /* ===== SUBJECT TEACHER ===== */
 
