@@ -16,16 +16,25 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // ================= ROLE FETCH (FIXED LOGIC) =================
-    const roleData = await TeacherRole.findOne({
-      teacherId: teacher._id
-    });
-
+    // ================= ROLE FETCH (PRIORITY: class_teacher) =================
     let role = "teacher";
     let className = "";
 
+    // 🔥 pehle class_teacher check karo
+    let roleData = await TeacherRole.findOne({
+      teacherId: teacher._id,
+      role: "class_teacher"
+    });
+
+    // 🔁 agar class_teacher nahi mila to koi bhi role le lo
+    if (!roleData) {
+      roleData = await TeacherRole.findOne({
+        teacherId: teacher._id
+      });
+    }
+
     if (roleData) {
-      role = roleData.role;        // class_teacher / subject_teacher
+      role = roleData.role;
       className = roleData.classId;
     }
 
@@ -37,7 +46,7 @@ router.post("/login", async (req, res) => {
         className
       },
       process.env.JWT_SECRET || "secretkey",
-      { expiresIn: "7d" }
+      { expiresIn: "365d" } // ✅ 1 YEAR
     );
 
     // ================= RESPONSE =================
