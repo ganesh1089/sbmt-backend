@@ -6,7 +6,6 @@ import TeacherRole from "../models/TeacherRole.js";
 
 const router = express.Router();
 
-/* ================= ADD STUDENT (FINAL FIXED) ================= */
 router.post(
   "/add",
   authMiddleware,
@@ -15,29 +14,24 @@ router.post(
     try {
 
       // ================= ROLE CHECK =================
-  const teacherId = req.teacher?.teacherId;
+      const teacherId = req.teacher?.teacherId;
 
-if (!teacherId) {
-  return res.status(401).json({ msg: "Invalid token data" });
-}
+      if (!teacherId) {
+        return res.status(401).json({ msg: "Invalid token data" });
+      }
 
-const roleData = await TeacherRole.findOne({
-  teacherId,
-  role: "class_teacher"
-});
+      const roleData = await TeacherRole.findOne({
+        teacherId,
+        role: "class_teacher"
+      });
 
-console.log("REQ TEACHER:", req.teacher);
-console.log("ROLE DATA:", roleData);
+      if (!roleData) {
+        return res.status(403).json({
+          msg: "Teacher role not assigned as class teacher"
+        });
+      }
 
-if (!roleData) {
-  console.log("ROLE NOT FOUND FOR TEACHER:", teacherId);
-
-  return res.status(403).json({
-    msg: "Teacher role not assigned as class teacher"
-  });
-}
-
-const teacherClass = roleData.classId;
+      const teacherClass = roleData.classId;
 
       // ================= VALIDATION =================
       const { name, fatherName, mobile, gender, dob, address } = req.body;
@@ -49,43 +43,42 @@ const teacherClass = roleData.classId;
       const cleanMobile = String(mobile).trim();
 
       // ================= GENDER FIX =================
-      const fixedGender = (gender || "").trim().toLowerCase() === "male"
-        ? "Male"
-        : (gender || "").trim().toLowerCase() === "female"
-        ? "Female"
-        : gender;
+      const fixedGender =
+        gender?.toLowerCase() === "male"
+          ? "Male"
+          : gender?.toLowerCase() === "female"
+          ? "Female"
+          : gender;
 
       // ================= ROLL NO =================
-      const lastStudent = await Student.findOne({ className: teacherClass })
+      const lastStudentInClass = await Student.findOne({ className: teacherClass })
         .sort({ rollNo: -1 })
         .lean();
 
-      const rollNo = (lastStudent?.rollNo || 0) + 1;
+      const rollNo = (lastStudentInClass?.rollNo || 0) + 1;
 
-      // ================= ADMISSION NO =================
       // ================= ADMISSION YEAR =================
-let admissionYear = new Date().getFullYear();
+      let admissionYear = new Date().getFullYear();
 
-if (teacherClass.includes("2nd-Year")) {
-  admissionYear -= 1;
-} else if (teacherClass.includes("3rd-Year")) {
-  admissionYear -= 2;
-}
+      if (teacherClass.includes("2nd-Year")) {
+        admissionYear -= 1;
+      } else if (teacherClass.includes("3rd-Year")) {
+        admissionYear -= 2;
+      }
 
-// ================= LAST STUDENT (GLOBAL) =================
-const lastStudent = await Student.findOne()
-  .sort({ createdAt: -1 })
-  .lean();
+      // ================= GLOBAL LAST STUDENT =================
+      const lastStudentGlobal = await Student.findOne()
+        .sort({ createdAt: -1 })
+        .lean();
 
-let nextNumber = 1;
+      let nextNumber = 1;
 
-if (lastStudent?.admissionNo) {
-  const lastNum = parseInt(lastStudent.admissionNo.split("-")[2]);
-  nextNumber = lastNum + 1;
-}
+      if (lastStudentGlobal?.admissionNo) {
+        const lastNum = parseInt(lastStudentGlobal.admissionNo.split("-")[2]);
+        nextNumber = lastNum + 1;
+      }
 
-// ================= FINAL ADMISSION NO =================
-const admissionNo = `SBMT-${admissionYear}-${String(nextNumber).padStart(3, "0")}`;
+      const admissionNo = `SBMT-${admissionYear}-${String(nextNumber).padStart(3, "0")}`;
 
       // ================= QR TOKEN =================
       const qrToken =
@@ -97,7 +90,7 @@ const admissionNo = `SBMT-${admissionYear}-${String(nextNumber).padStart(3, "0")
       const firstName = name.split(" ")[0].toLowerCase();
       const last2Digits = cleanMobile.slice(-2);
 
-      const username = `${firstName}${year}${last2Digits}`;
+      const username = `${firstName}${admissionYear}${last2Digits}`; // 🔥 FIXED
 
       // ================= PASSWORD =================
       const capName =
@@ -107,7 +100,7 @@ const admissionNo = `SBMT-${admissionYear}-${String(nextNumber).padStart(3, "0")
 
       const password = `${capName}@${dobYear}`;
 
-      // ================= CREATE STUDENT =================
+      // ================= CREATE =================
       const newStudent = await Student.create({
         name,
         fatherName,
@@ -122,7 +115,7 @@ const admissionNo = `SBMT-${admissionYear}-${String(nextNumber).padStart(3, "0")
         qrToken,
         username,
         password,
-        addedBy: req.teacher.teacherId,
+        addedBy: teacherId,
       });
 
       return res.json({
@@ -132,14 +125,13 @@ const admissionNo = `SBMT-${admissionYear}-${String(nextNumber).padStart(3, "0")
       });
 
     } catch (err) {
-  console.error("ADD STUDENT ERROR FULL:", err);
+      console.error("ADD STUDENT ERROR FULL:", err);
 
-  return res.status(500).json({
-    msg: "Server error",
-    error: err.message,
-    stack: err.stack
-  });
-}
+      return res.status(500).json({
+        msg: "Server error",
+        error: err.message
+      });
+    }
   }
 );
 
