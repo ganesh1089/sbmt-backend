@@ -62,7 +62,8 @@ const teacherClass = roleData.classId;
 
       const rollNo = (lastStudent?.rollNo || 0) + 1;
 
-     // ================= ADMISSION YEAR =================
+      // ================= ADMISSION NO =================
+      // ================= ADMISSION YEAR =================
 let admissionYear = new Date().getFullYear();
 
 if (teacherClass.includes("2nd-Year")) {
@@ -71,7 +72,7 @@ if (teacherClass.includes("2nd-Year")) {
   admissionYear -= 2;
 }
 
-// ================= LAST STUDENT =================
+// ================= LAST STUDENT (GLOBAL) =================
 const lastStudent = await Student.findOne()
   .sort({ createdAt: -1 })
   .lean();
