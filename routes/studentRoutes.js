@@ -138,15 +138,25 @@ router.post(
 /* ================= GET STUDENTS ================= */
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const roleData = await TeacherRole.findOne({
-      teacherId: req.teacher.teacherId
-    });
 
     const isHod = req.teacher?.role === "hod";
 
-    const filter = isHod
-      ? {}
-      : { className: roleData?.classId };
+    let filter = {};
+
+    if (!isHod) {
+      const roleData = await TeacherRole.findOne({
+        teacherId: req.teacher.teacherId,
+        role: "class_teacher"
+      });
+
+      if (!roleData) {
+        return res.status(403).json({
+          msg: "No class assigned"
+        });
+      }
+
+      filter = { className: roleData.classId };
+    }
 
     const students = await Student.find(filter).sort({ name: 1 });
 
@@ -170,7 +180,6 @@ router.get("/", authMiddleware, async (req, res) => {
     return res.status(500).json({ msg: "Server error" });
   }
 });
-
 /* ================= LOGIN ================= */
 router.post("/login", async (req, res) => {
   try {
