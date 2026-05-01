@@ -34,12 +34,12 @@ const authMiddleware = async (req, res, next) => {
     }
 
     // ================= SAFE ATTACH (IMPORTANT FIX) =================
-    req.teacher = {
-      _id: teacher._id,
-      name: teacher.name || "",
-      role: teacher.role || "teacher",
-      className: teacher.className || "",
-    };
+  req.teacher = {
+  teacherId: teacher._id,   // 🔥 IMPORTANT FIX
+  name: teacher.name || "",
+  role: teacher.role || "teacher",
+  className: teacher.className || "",
+};
 
     // 🔥 extra safety log (temporary debug)
     console.log("AUTH OK 👉", req.teacher);
