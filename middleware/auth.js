@@ -3,54 +3,37 @@ import Teacher from "../models/Teacher.js";
 
 const authMiddleware = async (req, res, next) => {
   try {
-    // ================= GET TOKEN =================
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({
-        message: "Authorization token missing or invalid format",
-      });
+      return res.status(401).json({ message: "Token missing" });
     }
 
     const token = authHeader.split(" ")[1];
 
-    // ================= VERIFY TOKEN =================
-    let decoded;
-    try {
-      decoded = jwt.verify(token, "secretkey");
-    } catch (err) {
-      return res.status(401).json({
-        message: "Token expired or invalid",
-      });
-    }
+    const decoded = jwt.verify(token, "secretkey");
 
-    // ================= FIND TEACHER =================
     const teacher = await Teacher.findById(decoded.teacherId);
 
     if (!teacher) {
-      return res.status(401).json({
-        message: "Teacher not found",
-      });
+      return res.status(401).json({ message: "Teacher not found" });
     }
 
-    // ================= SAFE ATTACH (IMPORTANT FIX) =================
-  req.teacher = {
-  teacherId: teacher._id,   // 🔥 IMPORTANT FIX
-  name: teacher.name || "",
-  role: teacher.role || "teacher",
-  className: teacher.className || "",
-};
+    // 🔥 FIXED STRUCTURE (IMPORTANT)
+    req.teacher = {
+      teacherId: teacher._id,
+      name: teacher.name,
+      role: teacher.role,
+      className: teacher.className || ""
+    };
 
-    // 🔥 extra safety log (temporary debug)
     console.log("AUTH OK 👉", req.teacher);
 
     next();
+
   } catch (err) {
     console.log("AUTH ERROR:", err.message);
-
-    return res.status(500).json({
-      message: "Server auth error",
-    });
+    return res.status(401).json({ message: "Invalid token" });
   }
 };
 
