@@ -27,10 +27,20 @@ const upload = multer({ storage });
 // pdf header--------------------------
 function addPDFHeader(doc, title, className) {
   // ================= LOGO =================
-  doc.image("assets/logo.png", 250, 10, {
-    fit: [80, 80],
-    align: "center"
-  });
+  // 🔥 FIXED LOGO PATH FOR RENDER
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// 👇 use absolute path
+const logoPath = path.join(__dirname, "../assets/logo.png");
+
+doc.image(logoPath, 250, 10, {
+  fit: [80, 80],
+  align: "center"
+});
 
   // 👉 IMPORTANT: space create karo logo ke baad
   doc.moveDown(6);
