@@ -7,7 +7,8 @@ import Student from "../models/Student.js";
 import Attendance from "../models/Attendance.js";
 import PDFDocument from "pdfkit";
 import ExcelJS from "exceljs";
-
+import path from "path";
+import { fileURLToPath } from "url";
 
 
 const router = express.Router();
@@ -28,8 +29,7 @@ const upload = multer({ storage });
 function addPDFHeader(doc, title, className) {
   // ================= LOGO =================
   // 🔥 FIXED LOGO PATH FOR RENDER
-import path from "path";
-import { fileURLToPath } from "url";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
