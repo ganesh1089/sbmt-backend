@@ -123,7 +123,17 @@ router.post("/assign", async (req, res) => {
 
     /* ===== CLASS TEACHER ===== */
     if (roleType === "classTeacher") {
+// 🔥 CHECK IF CLASS ALREADY HAS CLASS TEACHER
+const existingClassTeacher = await TeacherRole.findOne({
+  classId: className,
+  role: "class_teacher"
+});
 
+if (existingClassTeacher) {
+  return res.status(400).json({
+    message: "This class already has a class teacher"
+  });
+}
   const username =
     teacher.name.replace(/\s/g, "").slice(0, 4).toLowerCase() +
     "_" +
