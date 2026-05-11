@@ -252,24 +252,28 @@ router.get("/download/students/pdf", async (req, res) => {
 
     const studentsRaw = await Student.find(filter);
 
-// 🔥 PROPER ALPHABETICAL SORT (CASE INSENSITIVE)
-const students = studentsRaw.sort((a, b) =>
-  (a.name || "").toLowerCase().localeCompare((b.name || "").toLowerCase())
-);
+    // 🔥 PROPER ALPHABETICAL SORT
+    const students = studentsRaw.sort((a, b) =>
+      (a.name || "")
+        .toLowerCase()
+        .localeCompare((b.name || "").toLowerCase())
+    );
 
     const doc = new PDFDocument({ margin: 30 });
 
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", "attachment; filename=students-report.pdf");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=students-report.pdf"
+    );
 
     doc.pipe(res);
 
     // ================= TITLE =================
-   addPDFHeader(doc, "STUDENTS REPORT", className);
+    addPDFHeader(doc, "STUDENTS REPORT", className);
 
     // ================= TABLE SETTINGS =================
     const startX = 50;
-    const startY = doc.y;
     const rowHeight = 22;
 
     const col = {
@@ -277,32 +281,53 @@ const students = studentsRaw.sort((a, b) =>
       name: 90,
       father: 220,
       mobile: 360,
-      dob: 450
+      dob: 450,
     };
 
     const tableWidth = 500;
 
-    // ================= HEADER ROW =================
-    doc
-      .rect(startX, startY, tableWidth, rowHeight)
-      .fill("#1976d2");
+    let startY = doc.y;
 
-    doc.fillColor("white").fontSize(11).font("Helvetica-Bold");
+    // ================= HEADER FUNCTION =================
+    const drawTableHeader = (yPos) => {
+      doc
+        .rect(startX, yPos, tableWidth, rowHeight)
+        .fill("#1976d2");
 
-    doc.text("ROLL", col.sr, startY + 6);
-    doc.text("NAME", col.name, startY + 6);
-    doc.text("FATHER NAME", col.father, startY + 6);
-    doc.text("MOBILE", col.mobile, startY + 6);
-    doc.text("DOB", col.dob, startY + 6);
+      doc.fillColor("white").fontSize(11).font("Helvetica-Bold");
 
-    // reset color
-    doc.fillColor("black");
+      doc.text("ROLL", col.sr, yPos + 6);
+      doc.text("NAME", col.name, yPos + 6);
+      doc.text("FATHER NAME", col.father, yPos + 6);
+      doc.text("MOBILE", col.mobile, yPos + 6);
+      doc.text("DOB", col.dob, yPos + 6);
+
+      doc.fillColor("black");
+    };
+
+    // first header
+    drawTableHeader(startY);
 
     let y = startY + rowHeight;
 
     // ================= DATA ROWS =================
     students.forEach((s, i) => {
-      // alternate row bg
+
+      // 🔥 PAGE BREAK
+      if (y > 750) {
+
+        doc.addPage();
+
+        addPDFHeader(doc, "STUDENTS REPORT", className);
+
+        startY = doc.y;
+
+        drawTableHeader(startY);
+
+        y = startY + rowHeight;
+      }
+
+      // alternate bg
       if (i % 2 === 0) {
         doc.rect(startX, y, tableWidth, rowHeight).fill("#f5f5f5");
       }
@@ -310,18 +335,23 @@ const students = studentsRaw.sort((a, b) =>
       doc.fillColor("black").fontSize(10).font("Helvetica");
 
       doc.text(`${i + 1}`, col.sr, y + 6);
+
       doc.text(s.name || "-", col.name, y + 6);
+
       doc.text(s.fatherName || "-", col.father, y + 6);
+
       doc.text(s.mobile || "-", col.mobile, y + 6);
-      doc.text(s.dob || "-", col.dob, y + 6);
+
+      // 🔥 DOB FORMAT FIX
+      doc.text(
+        s.dob
+          ? new Date(s.dob).toLocaleDateString()
+          : "-",
+        col.dob,
+        y + 6
+      );
 
       y += rowHeight;
-
-      // page break handling
-      if (y > 750) {
-        doc.addPage();
-        y = 50;
-      }
     });
 
     // ================= FOOTER =================
