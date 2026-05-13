@@ -183,12 +183,20 @@ router.get("/", authMiddleware, async (req, res) => {
 /* ================= LOGIN ================= */
 router.post("/login", async (req, res) => {
   try {
+
+    console.log("LOGIN BODY:", req.body);
+
     let { username, password } = req.body;
 
     username = username.trim().toLowerCase();
     password = password.trim();
 
+    console.log("USERNAME:", username);
+    console.log("PASSWORD:", password);
+
     const student = await Student.findOne({ username });
+
+    console.log("FOUND STUDENT:", student);
 
     if (!student) {
       return res.status(400).json({ message: "Student not found" });
@@ -213,7 +221,11 @@ router.post("/login", async (req, res) => {
 
   } catch (err) {
     console.log("LOGIN ERROR:", err);
-    return res.status(500).json({ message: "Server error" });
+
+    return res.status(500).json({
+      message: "Server error",
+      error: err.message
+    });
   }
 });
 
