@@ -17,7 +17,7 @@ const __dirname = path.dirname(__filename);
 
 // ================= BODY PARSER =================
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // 🔥 IMPORTANT for forms/multer
+app.use(express.urlencoded({ extended: true })); 
 
 // ================= CORS =================
 app.use(
@@ -52,7 +52,7 @@ if (!fs.existsSync(uploadPath)) {
   console.log("📁 uploads folder created");
 }
 
-// 🔥 STATIC FILES (IMPORTANT FIX)
+// STATIC FILES (IMPORTANT FIX)
 app.use("/uploads", express.static(uploadPath));
 
 // ================= ROUTES =================

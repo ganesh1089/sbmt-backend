@@ -2,7 +2,7 @@
 import Student from "../models/Student.js";
 import Attendance from "../models/Attendance.js";
 import Marks from "../models/Marks.js";
-import Teacher from "../models/Teacher.js"; // Teacher model import
+import Teacher from "../models/Teacher.js"; 
 import bcrypt from "bcryptjs";
 
 export const handleAction = async (req, res) => {
@@ -16,13 +16,6 @@ export const handleAction = async (req, res) => {
         const student = new Student(data);
         await student.save();
         return res.json({ message: "Student added", student });
-
-      // ---------------- Attendance ----------------
-      // case "mark_attendance":
-      //   const attendance = new Attendance(data);
-      //   await attendance.save();
-      //   return res.json({ message: "Attendance marked", attendance });
-
       // ---------------- Marks ----------------
       case "add_marks":
         const marks = new Marks(data);
