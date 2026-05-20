@@ -149,8 +149,6 @@ if (existingClassTeacher) {
   }).save();
 
   // ✅ ADD THIS LINE (VERY IMPORTANT)
-  teacher.className = className;
-
   teacher.username = username;
   teacher.password = password;
   teacher.subject = subject || "";
