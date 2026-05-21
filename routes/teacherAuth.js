@@ -82,7 +82,7 @@ router.put("/change-password", authMiddleware, async (req, res) => {
       });
     }
 
-    const teacher = await Teacher.findById(req.teacher._id);
+    const teacher = await Teacher.findById(req.teacher.teacherId);
 
     if (!teacher) {
       return res.status(404).json({
