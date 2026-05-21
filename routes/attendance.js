@@ -14,9 +14,7 @@ function isToday(date) {
   return date === today;
 }
 
-// =========================
-// 📌 OPEN ATTENDANCE
-// =========================
+
 // =========================
 // 📌 OPEN ATTENDANCE
 // =========================
@@ -55,9 +53,9 @@ router.post("/open", authMiddleware, async (req, res) => {
     if (!att) {
 
       const students = await Student.find({
-        className: teacherClass,
-        addedBy: req.teacher.teacherId
-      }).sort({ rollNo: 1 });
+  className: teacherClass,
+  addedBy: req.teacher.teacherId
+}).sort({ rollNo: 1 });
 
       const records = students.map((s) => ({
         studentId: s._id,
@@ -144,9 +142,6 @@ router.post("/save", authMiddleware, async (req, res) => {
 // =========================
 // 🎉 HOLIDAY
 // =========================
-// =========================
-// 🎉 HOLIDAY
-// =========================
 router.post("/holiday", authMiddleware, async (req, res) => {
   try {
 
@@ -180,9 +175,9 @@ router.post("/holiday", authMiddleware, async (req, res) => {
     }
 
     const students = await Student.find({
-      className: teacherClass,
-      addedBy: req.teacher.teacherId
-    }).sort({ rollNo: 1 });
+  className: teacherClass,
+  addedBy: req.teacher.teacherId
+}).sort({ rollNo: 1 });
 
     const records = students.map((s) => ({
       studentId: s._id,
