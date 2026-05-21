@@ -17,23 +17,33 @@ function isToday(date) {
 // =========================
 // 📌 OPEN ATTENDANCE
 // =========================
+// =========================
+// 📌 OPEN ATTENDANCE
+// =========================
 router.post("/open", authMiddleware, async (req, res) => {
   try {
+
     const teacherClass = req.teacher?.className;
 
     if (!teacherClass) {
-      return res.status(403).json({ msg: "Class not assigned" });
+      return res.status(403).json({
+        msg: "Class not assigned"
+      });
     }
 
     const { date } = req.body;
 
     if (!date) {
-      return res.status(400).json({ msg: "Date is required" });
+      return res.status(400).json({
+        msg: "Date is required"
+      });
     }
 
-    // 🔒 DATE RESTRICTION
+    // 🔒 ONLY TODAY
     if (!isToday(date)) {
-      return res.status(400).json({ msg: "Only today's attendance allowed" });
+      return res.status(400).json({
+        msg: "Only today's attendance allowed"
+      });
     }
 
     let att = await Attendance.findOne({
@@ -41,11 +51,13 @@ router.post("/open", authMiddleware, async (req, res) => {
       date,
     });
 
+    // 🔥 CREATE NEW ATTENDANCE
     if (!att) {
+
       const students = await Student.find({
-  className: teacherClass,
-  addedBy: req.teacher._id
-}).sort({ rollNo: 1 });
+        className: teacherClass,
+        addedBy: req.teacher.teacherId
+      }).sort({ rollNo: 1 });
 
       const records = students.map((s) => ({
         studentId: s._id,
@@ -64,12 +76,16 @@ router.post("/open", authMiddleware, async (req, res) => {
     }
 
     res.json(att);
+
   } catch (err) {
+
     console.error(err);
-    res.status(500).json({ msg: err.message });
+
+    res.status(500).json({
+      msg: err.message
+    });
   }
 });
-
 
 // =========================
 // 💾 SAVE ATTENDANCE
@@ -128,19 +144,27 @@ router.post("/save", authMiddleware, async (req, res) => {
 // =========================
 // 🎉 HOLIDAY
 // =========================
+// =========================
+// 🎉 HOLIDAY
+// =========================
 router.post("/holiday", authMiddleware, async (req, res) => {
   try {
+
     const teacherClass = req.teacher?.className;
 
     if (!teacherClass) {
-      return res.status(403).json({ msg: "Class not assigned" });
+      return res.status(403).json({
+        msg: "Class not assigned"
+      });
     }
 
     const { date, reason } = req.body;
 
-    // 🔒 DATE RESTRICTION
+    // 🔒 ONLY TODAY
     if (!isToday(date)) {
-      return res.status(400).json({ msg: "Holiday only for today allowed" });
+      return res.status(400).json({
+        msg: "Holiday only for today allowed"
+      });
     }
 
     const existing = await Attendance.findOne({
@@ -148,14 +172,17 @@ router.post("/holiday", authMiddleware, async (req, res) => {
       date,
     });
 
+    // 🔒 LOCK CHECK
     if (existing && existing.isLocked) {
-      return res.status(400).json({ msg: "Already locked attendance" });
+      return res.status(400).json({
+        msg: "Already locked attendance"
+      });
     }
 
     const students = await Student.find({
-  className: teacherClass,
-  addedBy: req.teacher._id
-}).sort({ rollNo: 1 });
+      className: teacherClass,
+      addedBy: req.teacher.teacherId
+    }).sort({ rollNo: 1 });
 
     const records = students.map((s) => ({
       studentId: s._id,
@@ -184,11 +211,14 @@ router.post("/holiday", authMiddleware, async (req, res) => {
     });
 
   } catch (err) {
+
     console.error(err);
-    res.status(500).json({ msg: err.message });
+
+    res.status(500).json({
+      msg: err.message
+    });
   }
 });
-
 
 // =========================
 // 📋 VIEW ATTENDANCE
