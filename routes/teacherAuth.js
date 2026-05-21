@@ -2,6 +2,8 @@ import express from "express";
 import Teacher from "../models/Teacher.js";
 import TeacherRole from "../models/TeacherRole.js";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+import authMiddleware from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -68,4 +70,47 @@ router.post("/login", async (req, res) => {
   }
 });
 
+
+router.put("/change-password", authMiddleware, async (req, res) => {
+  try {
+
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        message: "All fields required"
+      });
+    }
+
+    const teacher = await Teacher.findById(req.teacher._id);
+
+    if (!teacher) {
+      return res.status(404).json({
+        message: "Teacher not found"
+      });
+    }
+
+    if (teacher.password !== oldPassword) {
+      return res.status(400).json({
+        message: "Old password incorrect"
+      });
+    }
+
+    teacher.password = newPassword;
+
+    await teacher.save();
+
+    res.json({
+      message: "Password changed successfully"
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      message: "Server error"
+    });
+  }
+});
 export default router;

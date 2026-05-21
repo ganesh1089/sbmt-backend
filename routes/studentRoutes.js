@@ -263,4 +263,99 @@ router.get("/:id", authMiddleware, async (req, res) => {
   }
 });
 
+/* ================= UPDATE STUDENT ================= */
+router.put(
+  "/:id",
+  authMiddleware,
+  upload.single("photo"),
+  async (req, res) => {
+    try {
+      const student = await Student.findById(req.params.id);
+
+      if (!student) {
+        return res.status(404).json({ msg: "Student not found" });
+      }
+
+      const {
+        name,
+        fatherName,
+        mobile,
+        gender,
+        dob,
+        address,
+      } = req.body;
+
+      // ✅ validation
+      if (!name || !fatherName || !mobile || !dob) {
+        return res.status(400).json({
+          msg: "All required fields required",
+        });
+      }
+
+      if (!/^[A-Za-z ]+$/.test(name)) {
+        return res.status(400).json({
+          msg: "Name only letters allowed",
+        });
+      }
+
+      if (!/^[0-9]{10}$/.test(mobile)) {
+        return res.status(400).json({
+          msg: "Mobile must be 10 digits",
+        });
+      }
+
+      student.name = name;
+      student.fatherName = fatherName;
+      student.mobile = mobile;
+      student.gender = gender;
+      student.dob = dob;
+      student.address = address;
+
+      // ✅ photo update
+      if (req.file) {
+        student.photo = req.file.filename;
+      }
+
+      await student.save();
+
+      res.json({
+        msg: "Student updated successfully ✅",
+      });
+
+    } catch (err) {
+      console.log("UPDATE ERROR:", err);
+
+      res.status(500).json({
+        msg: "Server error",
+      });
+    }
+  }
+);
+
+/* ================= DELETE STUDENT ================= */
+router.delete("/:id", authMiddleware, async (req, res) => {
+  try {
+
+    const student = await Student.findById(req.params.id);
+
+    if (!student) {
+      return res.status(404).json({
+        msg: "Student not found",
+      });
+    }
+
+    await Student.findByIdAndDelete(req.params.id);
+
+    res.json({
+      msg: "Student deleted successfully ✅",
+    });
+
+  } catch (err) {
+    console.log("DELETE ERROR:", err);
+
+    res.status(500).json({
+      msg: "Server error",
+    });
+  }
+});
 export default router;
