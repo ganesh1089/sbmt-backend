@@ -31,4 +31,27 @@ router.post("/login", (req, res) => {
   return res.status(400).json({ message: "Invalid credentials" });
 });
 
+// POST /api/hod/change-password
+router.post("/change-password", (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+
+  // validation
+  if (!oldPassword || !newPassword) {
+    return res.status(400).json({ message: "All fields required" });
+  }
+
+  // check old password
+  if (oldPassword !== hodUser.password) {
+    return res.status(400).json({ message: "Old password incorrect ❌" });
+  }
+
+  // update password
+  hodUser.password = newPassword;
+  hodUser.firstLogin = false;
+
+  return res.json({
+    message: "Password updated successfully ✅"
+  });
+});
+
 export default router;
