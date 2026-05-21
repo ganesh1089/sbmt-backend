@@ -42,7 +42,10 @@ router.post("/open", authMiddleware, async (req, res) => {
     });
 
     if (!att) {
-      const students = await Student.find({ className: teacherClass }).sort({ rollNo: 1 });
+      const students = await Student.find({
+  className: teacherClass,
+  addedBy: req.teacher._id
+}).sort({ rollNo: 1 });
 
       const records = students.map((s) => ({
         studentId: s._id,
@@ -149,7 +152,10 @@ router.post("/holiday", authMiddleware, async (req, res) => {
       return res.status(400).json({ msg: "Already locked attendance" });
     }
 
-    const students = await Student.find({ className: teacherClass }).sort({ rollNo: 1 });
+    const students = await Student.find({
+  className: teacherClass,
+  addedBy: req.teacher._id
+}).sort({ rollNo: 1 });
 
     const records = students.map((s) => ({
       studentId: s._id,

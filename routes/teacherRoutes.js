@@ -150,10 +150,11 @@ if (existingClassTeacher) {
 
   // ✅ ADD THIS LINE (VERY IMPORTANT)
   teacher.username = username;
-  teacher.password = password;
-  teacher.subject = subject || "";
+teacher.password = password;
+teacher.subject = subject || "";
+teacher.className = className; // 🔥 IMPORTANT FIX
 
-  await teacher.save();
+await teacher.save();
 
   return res.json({
     message: "Class Teacher Assigned",
