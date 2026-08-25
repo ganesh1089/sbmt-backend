@@ -368,11 +368,11 @@ router.put(
         fatherName,
         mobile,
         gender,
-        dob,
-        address,
       } = req.body;
 
-      if (!name || !fatherName || !mobile || !dob) {
+      // ================= VALIDATION =================
+
+      if (!name || !fatherName || !mobile || !gender) {
         return res.status(400).json({
           msg: "All required fields required",
         });
@@ -390,12 +390,14 @@ router.put(
         });
       }
 
+      // ================= UPDATE =================
+
       student.name = name;
       student.fatherName = fatherName;
       student.mobile = mobile;
       student.gender = gender;
-      student.dob = dob;
-      student.address = address;
+
+      // ================= PHOTO =================
 
       if (req.file) {
         student.photo = req.file.filename;
@@ -406,6 +408,7 @@ router.put(
       res.json({
         msg: "Student updated successfully ✅",
       });
+
     } catch (err) {
       console.log("UPDATE ERROR:", err);
 
