@@ -134,12 +134,13 @@ if (existingClassTeacher) {
     message: "This class already has a class teacher"
   });
 }
-  const username =
-    teacher.name.replace(/\s/g, "").slice(0, 4).toLowerCase() +
-    "_" +
-    className.replace(/\s/g, "").toLowerCase();
+const cleanName = teacher.name
+  .replace(/^(mr|mrs|ms|miss|dr|prof)\.?\s+/i, "")
+  .replace(/\s+/g, "");
 
-  const password = teacher.name + "@687";
+const username = cleanName.toLowerCase() + "687";
+
+const password = cleanName + "@687";
 
   await new TeacherRole({
     teacherId,

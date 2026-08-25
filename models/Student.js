@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const studentSchema = new mongoose.Schema(
   {
     // 👤 BASIC INFO
+
     name: {
       type: String,
       required: true,
@@ -19,12 +20,8 @@ const studentSchema = new mongoose.Schema(
       enum: ["Male", "Female", "Other"],
     },
 
-    dob: {
-      type: Date,
-      required: true,
-    },
-
     // 🏫 ACADEMIC INFO
+
     className: {
       type: String,
       required: true,
@@ -37,6 +34,7 @@ const studentSchema = new mongoose.Schema(
     },
 
     // 🔥 UNIQUE IDENTIFIERS
+
     admissionNo: {
       type: String,
       unique: true,
@@ -50,27 +48,25 @@ const studentSchema = new mongoose.Schema(
     },
 
     // 📞 CONTACT
+
     mobile: {
       type: String,
       trim: true,
       index: true,
     },
 
-    address: {
-      type: String,
-      trim: true,
-    },
-
     // 🖼️ PHOTO
+
     photo: {
       type: String,
     },
 
-    // 🔐 LOGIN CREDENTIALS (🔥 NEW)
+    // 🔐 LOGIN CREDENTIALS
+
     username: {
       type: String,
       required: true,
-      unique: true,   // ⚠️ important
+      unique: true,
       index: true,
     },
 
@@ -80,6 +76,7 @@ const studentSchema = new mongoose.Schema(
     },
 
     // 🔐 SYSTEM INFO
+
     addedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Teacher",
@@ -90,7 +87,11 @@ const studentSchema = new mongoose.Schema(
   }
 );
 
-// 🔥 UNIQUE CLASS + ROLL NO (IMPORTANT)
-studentSchema.index({ className: 1, rollNo: 1 }, { unique: true });
+// 🔥 UNIQUE CLASS + ROLL NO
+
+studentSchema.index(
+  { className: 1, rollNo: 1 },
+  { unique: true }
+);
 
 export default mongoose.model("Student", studentSchema);
